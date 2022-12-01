@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<dictionary>
+  <item>
+    <key>
+      <string>c2a1c7a4-d519-4bd1-859b-6ce7db9325fb.HTTP proxy</string>
+    </key>
+    <value>
+      <string />
+    </value>
+  </item>
+  <item>
+    <key>
+      <string>c2a1c7a4-d519-4bd1-859b-6ce7db9325fb.HTTP proxy port</string>
+    </key>
+    <value>
+      <string />
+    </value>
+  </item>
+  <item>
+    <key>
+      <string>c2a1c7a4-d519-4bd1-859b-6ce7db9325fb.Password</string>
+    </key>
+    <value>
+      <string />
+    </value>
+  </item>
+  <item>
+    <key>
+      <string>c2a1c7a4-d519-4bd1-859b-6ce7db9325fb.Username</string>
+    </key>
+    <value>
+      <string />
+    </value>
+  </item>
+</dictionary>
