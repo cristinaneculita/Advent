@@ -4,36 +4,47 @@
 using System.Runtime.CompilerServices;
 
 var rez = 0;
-var listr = new List<long>();
-string[] lines = System.IO.File.ReadAllLines("input.txt");
-long s = 0;
+
+string[] lines = System.IO.File.ReadAllLines("input1.txt");
+
 foreach (var line in lines)
 {
-    if (string.IsNullOrEmpty(line))
+    switch (line)
     {
+        case "A X": rez += 3;
+            break;
+        case "A Y":
+            rez += 1+3;
+            break;
 
-        listr.Add(s);
-        s = 0;
-    }
-    else
-    {
-        int.TryParse(line, out int r);
-        s += r;
+        case "A Z":
+            rez += 2+6;
+            break;
+
+        case "B X":
+            rez += 1;
+            break;
+
+        case "B Y":
+            rez += 2 +3;
+            break;
+
+        case "B Z":
+            rez += 3+6;
+            break;
+
+        case "C X":
+            rez += 2;
+            break;
+
+        case "C Y":
+            rez += 3+3;
+            break;
+
+        case "C Z":
+            rez += 1+6;
+            break;
+
     }
 }
-
- s = 0;
-var m = listr.Max();
-s += (long)m;
-
-listr.Remove(m);
-m = listr.Max();
-s += (long)m;
-
-listr.Remove(m);
-m = listr.Max();
-s += (long)m;
-
-listr.Remove(m);
-
-Console.WriteLine("Hello, World!  {0}",s);
+Console.WriteLine("Hello, World!  {0}",rez);
