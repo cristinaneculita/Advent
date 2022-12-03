@@ -1,50 +1,40 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 
-var rez = 0;
+long rez = 0;
 
 string[] lines = System.IO.File.ReadAllLines("input1.txt");
 
-foreach (var line in lines)
+//foreach (var line in lines)
+//{
+//    int y;
+//    //var m = line.Length / 2;
+//    //var x1 = line.Substring(0, m);
+//    //var x2 = line.Substring(m);
+//    //var x = x1.Intersect(x2).ToList();
+
+//    if (char.IsLower(x[0]))
+//        y = x[0] - 'a'+1;
+//    else y = x[0] - 'A' + 27;
+//    rez += y;
+
+//}
+
+for (int i = 0; i < lines.Length-2; i+=3)
 {
-    switch (line)
-    {
-        case "A X": rez += 3;
-            break;
-        case "A Y":
-            rez += 1+3;
-            break;
+    var x = lines[i].Intersect(lines[i + 1]).Intersect(lines[i+2]).ToList();
+    int y;
+    //var m = line.Length / 2;
+    //var x1 = line.Substring(0, m);
+    //var x2 = line.Substring(m);
+    //var x = x1.Intersect(x2).ToList();
 
-        case "A Z":
-            rez += 2+6;
-            break;
-
-        case "B X":
-            rez += 1;
-            break;
-
-        case "B Y":
-            rez += 2 +3;
-            break;
-
-        case "B Z":
-            rez += 3+6;
-            break;
-
-        case "C X":
-            rez += 2;
-            break;
-
-        case "C Y":
-            rez += 3+3;
-            break;
-
-        case "C Z":
-            rez += 1+6;
-            break;
-
-    }
+    if (char.IsLower(x[0]))
+        y = x[0] - 'a' + 1;
+    else y = x[0] - 'A' + 27;
+    rez += y;
 }
 Console.WriteLine("Hello, World!  {0}",rez);
