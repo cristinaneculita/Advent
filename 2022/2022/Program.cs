@@ -8,33 +8,32 @@ long rez = 0;
 
 string[] lines = System.IO.File.ReadAllLines("input1.txt");
 
-//foreach (var line in lines)
-//{
-//    int y;
-//    //var m = line.Length / 2;
-//    //var x1 = line.Substring(0, m);
-//    //var x2 = line.Substring(m);
-//    //var x = x1.Intersect(x2).ToList();
-
-//    if (char.IsLower(x[0]))
-//        y = x[0] - 'a'+1;
-//    else y = x[0] - 'A' + 27;
-//    rez += y;
-
-//}
-
-for (int i = 0; i < lines.Length-2; i+=3)
+foreach (var line in lines)
 {
-    var x = lines[i].Intersect(lines[i + 1]).Intersect(lines[i+2]).ToList();
-    int y;
-    //var m = line.Length / 2;
-    //var x1 = line.Substring(0, m);
-    //var x2 = line.Substring(m);
-    //var x = x1.Intersect(x2).ToList();
 
-    if (char.IsLower(x[0]))
-        y = x[0] - 'a' + 1;
-    else y = x[0] - 'A' + 27;
-    rez += y;
+    var x = line.Split(",");
+    var y1 = x[0].Split("-");
+    var y2 = x[1].Split("-");
+    int.TryParse(y1[0], out int z1);
+    int.TryParse(y1[1], out int z2);
+    int.TryParse(y2[0], out int z3);
+    int.TryParse(y2[1], out int z4);
+    if (z1 <= z3 && z2 >= z4 || z3 <= z1 && z4 >= z2)
+        rez++;
+   
+    //var l1 = new List<int>();
+    //for (int i = z1; i <=z2; i++)
+    //{
+    //    l1.Add(i);
+    //}
+    //var l2 = new List<int>();
+    //for (int i = z3; i <= z4; i++)
+    //{
+    //    l2.Add(i);
+    //}
+
+    //if (l1.Intersect(l2).Any())
+    //    rez++;
 }
+
 Console.WriteLine("Hello, World!  {0}",rez);
