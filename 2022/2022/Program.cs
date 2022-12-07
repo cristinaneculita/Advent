@@ -15,16 +15,20 @@ int i = 1;
 
 dir = ReadDir(lines, ref i, dir);
 
-Dir ReadDir(string[] lines, ref int i, Dir dir )
+Dir ReadDir(string[] lines, ref int i, Dir dir)
 {
     while (true)
     {
-        
+        if (i == lines.Length)
+        {
+            break;
+
+        }
         if (lines[i] == "$ ls")
         {
             i++;
-           
-            while (i<lines.Length && lines[i][0] != '$' )
+
+            while (i < lines.Length && lines[i][0] != '$')
             {
                 if (lines[i][0] == 'd')
                 {
@@ -42,39 +46,25 @@ Dir ReadDir(string[] lines, ref int i, Dir dir )
                 i++;
             }
         }
-        if (i == lines.Length)
-        {
-            break;
 
-        }
-        if (lines[i] == "$ cd ..")
+        if (i < lines.Length && lines[i] == "$ cd ..")
         {
             i++;
             return dir;
         }
-        
-        while (i < lines.Length && lines[i] != "$ cd ..")
-        {
-            if (lines[i].StartsWith("$ cd") && !lines[i].EndsWith("..") && lines[i] != "$ cd /")
-            {
-                var x = lines[i].Split(" ");
-                var r = dir.Dirs.FirstOrDefault(d => d.Name == x[2]);
-                i++;
-                ReadDir(lines, ref i, r);
-            }
-        }
-        if (i == lines.Length)
-        {
-            break;
 
-        }
-        if (i < lines.Length && lines[i] == "$ cd /")
+        if (i < lines.Length && lines[i].StartsWith("$ cd") && !lines[i].EndsWith("..") && lines[i] != "$ cd /")
         {
+            var x = lines[i].Split(" ");
+            var r = dir.Dirs.FirstOrDefault(d => d.Name == x[2]);
             i++;
-            ReadDir(lines, ref i, dir);
+            ReadDir(lines, ref i, r);
         }
 
-        if (dir.Name != "/" && i==lines.Length-1)
+
+      
+
+        if (dir.Name != "/" && i == lines.Length - 1)
             break;
     }
 
@@ -115,7 +105,7 @@ long Calcm(Dir dir)
 long s = 0;
 foreach (var l1 in l)
 {
-    if(l1<100000)
+    if (l1 < 100000)
         s += l1;
 }
 
@@ -146,15 +136,15 @@ long MaxSumSubset(List<long> values, int limit)
             if (stIndex + j > n)
                 break;
             long sum = 0;
-            for (int k = stIndex; k < stIndex+j; k++)
+            for (int k = stIndex; k < stIndex + j; k++)
             {
                 sum += values[k];
             }
-           
+
             if (sum > max)
             {
                 max = sum;
-               
+
             }
         }
     }
@@ -196,7 +186,7 @@ class Dir
 
     public Dir(string name)
     {
-        Dirs =new List<Dir>();
+        Dirs = new List<Dir>();
         Files = new List<Fil>();
         Name = name;
     }
@@ -213,6 +203,5 @@ internal class Fil
     }
 }
 
-   
-        
-         
+
+
