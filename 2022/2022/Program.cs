@@ -3,205 +3,140 @@
 
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
+using System.Data;
+using System.Diagnostics.Tracing;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 
 long rez = 0;
-
+int L = 99;
 string[] lines = System.IO.File.ReadAllLines("input1.txt");
 
-var dir = new Dir("/");
-int i = 1;
-
-dir = ReadDir(lines, ref i, dir);
-
-Dir ReadDir(string[] lines, ref int i, Dir dir)
+var mat = new int[L, L];
+for (int i = 0; i < L; i++)
 {
-    while (true)
+    for (int j = 0; j < L; j++)
     {
-        if (i == lines.Length)
-        {
-            break;
+        int.TryParse(lines[i][j].ToString(), out int x);
+        mat[i, j] = x;
+    }
+}
 
-        }
-        if (lines[i] == "$ ls")
-        {
-            i++;
+var max = 0;
 
-            while (i < lines.Length && lines[i][0] != '$')
-            {
-                if (lines[i][0] == 'd')
-                {
-                    var x = lines[i].Split(" ");
-                    var r = new Dir(x[1]);
-                    dir.Dirs.Add(r);
-                }
-                else
-                {
-                    var x = lines[i].Split(" ");
-                    long.TryParse(x[0], out long x0);
-                    dir.Files.Add(new Fil(x[1], x0));
-                }
+for (int i = 0; i < L; i++)
+{
+    for (int j = 0; j < L; j++)
+    {
+        if (Highest(mat,i,j))
+            rez++;
+        var x = scenic(mat, i, j);
+        if (x > max)
+            max = x;
+    }
+}
 
-                i++;
-            }
-        }
+int scenic(int[,] mat, int i, int j)
+{
+    var s = 1;
+    //look left
+    if (i == 0)
+        return 0;
+    var tot = 0;
+    for (int k = i-1; k >=0; k--)
+    {
+        tot++;
+        if (mat[k,j]>= mat[i, j])
+           break;
+    }
+    s*=tot;
 
-        if (i < lines.Length && lines[i] == "$ cd ..")
-        {
-            i++;
-            return dir;
-        }
-
-        if (i < lines.Length && lines[i].StartsWith("$ cd") && !lines[i].EndsWith("..") && lines[i] != "$ cd /")
-        {
-            var x = lines[i].Split(" ");
-            var r = dir.Dirs.FirstOrDefault(d => d.Name == x[2]);
-            i++;
-            ReadDir(lines, ref i, r);
-        }
-
-
-      
-
-        if (dir.Name != "/" && i == lines.Length - 1)
+    //look up
+    if (j == 0)
+        return 0;
+    tot = 0;
+    for (int k = j-1; k >=0; k--)
+    {
+        tot++;
+        if (mat[i, k] >= mat[i, j])
             break;
     }
+    s *= tot;
 
-    return dir;
-}
-
-List<long> l = new List<long>();
-CalcL(dir);
-
-void CalcL(Dir dir)
-{
-    l.Add(Calcm(dir));
-    foreach (var dir1 in dir.Dirs)
+    //look right
+    if (i == L - 1)
+        return 0;
+    tot = 0;
+    for (int k = i + 1; k < L; k++)
     {
-        CalcL(dir1);
+        tot++;
+        if (mat[k, j] >= mat[i, j])
+            break;
     }
-}
+    s *= tot;
 
-long Calcm(Dir dir)
-{
-    long l = 0;
-    foreach (var dirFile in dir.Files)
+    //look down
+    tot = 0;
+    if (j == L - 1)
+        return 0;
+    for (int k = j + 1; k < L; k++)
     {
-        l += dirFile.Size;
+        tot++;
+        if (mat[i, k] >= mat[i, j])
+             break;
     }
-
-    foreach (var dirDir in dir.Dirs)
-    {
-        l += Calcm(dirDir);
-    }
-    return l;
+    s *= tot;
+    return s;
 }
 
-
-
-
-//ist<long> lm = new List<long>();
-long s = 0;
-foreach (var l1 in l)
+bool Highest(int[,] mat, int i, int j)
 {
-    if (l1 < 100000)
-        s += l1;
-}
-
-Console.WriteLine(s);
-
-
-long systemm = 70000000;
-long need = 30000000;
-var used = l.Max();
-var unused = systemm - used;
-var needed = need - unused;
-var candidates = new List<long>();
-foreach (var l1 in l)
-{
-    if (l1 > needed)
-        candidates.Add(l1);
-}
-
-Console.WriteLine(candidates.Min());
-long MaxSumSubset(List<long> values, int limit)
-{
-    long max = 0;
-    var n = values.Count;
-    for (int j = 1; j <= n; j++)
-    {
-        for (int stIndex = 0; stIndex < n; stIndex++)
-        {
-            if (stIndex + j > n)
-                break;
-            long sum = 0;
-            for (int k = stIndex; k < stIndex + j; k++)
-            {
-                sum += values[k];
-            }
-
-            if (sum > max)
-            {
-                max = sum;
-
-            }
-        }
-    }
-
-    return max;
-}
-bool isSubsetSum(List<long> set, int n, long sum)
-{
-
-    // Base Cases
-    if (sum == 0)
+    //look left
+    if (i == 0)
         return true;
-    if (n == 0)
-        return false;
-
-    // If last element is greater than sum,
-    // then ignore it
-    if (set[n - 1] > sum)
-        return isSubsetSum(set, n - 1, sum);
-
-    /* else, check if sum can be obtained by any 
-of the following:
-      (a) including the last element
-      (b) excluding the last element   */
-    return isSubsetSum(set, n - 1, sum)
-           || isSubsetSum(set, n - 1, sum - set[n - 1]);
-}
-class Dir
-{
-    public List<Dir> Dirs { get; set; }
-    public List<Fil> Files { get; set; }
-    public string Name { get; set; }
-
-    public Dir(List<Dir> dirs, List<Fil> files)
+    var tot = 0;
+    for (int k = 0; k < i; k++)
     {
-        Dirs = dirs;
-        Files = files;
+        if (mat[k, j] < mat[i, j])
+            tot++;
     }
+    if(tot==i) return true;
 
-    public Dir(string name)
+    //look up
+    if(j==0) 
+        return true;
+    tot = 0;
+    for (int k = 0; k < j; k++)
     {
-        Dirs = new List<Dir>();
-        Files = new List<Fil>();
-        Name = name;
+        if (mat[i, k] < mat[i, j])
+            tot++;
     }
-}
-internal class Fil
-{
-    public string Name { get; set; }
-    public long Size { get; set; }
+    if(tot==j) return true;
 
-    public Fil(string name, long size)
+    //look right
+    if (i == L - 1)
+        return true;
+    tot = 0;
+    for (int k = i+1; k < L; k++)
     {
-        Name = name;
-        Size = size;
+        if (mat[k, j] < mat[i, j])
+            tot++;
     }
+    if(tot==L-i-1)
+        return true;
+
+    //look down
+    tot = 0;
+    if(j==L-1)
+        return true;
+    for (int k = j+1; k < L; k++)
+    {
+        if (mat[i, k] < mat[i, j])
+            tot++;
+    }
+    if(tot == L - j - 1)
+        return true;
+    return false;
 }
 
-
-
+Console.WriteLine("result "+max);
