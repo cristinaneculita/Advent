@@ -3,140 +3,249 @@
 
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.Design;
 using System.Data;
 using System.Diagnostics.Tracing;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 
+
 long rez = 0;
-int L = 99;
 string[] lines = System.IO.File.ReadAllLines("input1.txt");
-
+int L = 2000;
+int sx = 1000;
+int sy = 1000;
+//int L = 6;
+//int sx = 0;
+//int sy = 4;
 var mat = new int[L, L];
+var tail = new Point[10];
+var H = new Point(sx, sy);
+var T = new Point(sx, sy);
+for (int i = 0; i < 9; i++)
+    tail[i] = new Point(sx, sy);
+
+var vis = new bool[L, L];
+vis[sx,sy] = true;
+foreach (var line in lines)
+{
+    var x = line.Split(" ");
+    int.TryParse(x[1], out int pasi);
+
+    for (int i = 0; i < pasi; i++)
+    {
+        switch (x[0])
+        {
+            case "R":
+                MoveHRightT(mat, H, tail, vis);
+                break;
+            case "U":
+                MoveHUpT(mat, H, tail, vis);
+                break;
+            case "L":
+                MoveHLeftT(mat, H, tail, vis);
+                break;
+            case "D":
+                MoveHDOwnT(mat, H, tail, vis);
+                break;
+        }
+    }
+}
+
+long sum =0;
+
 for (int i = 0; i < L; i++)
 {
     for (int j = 0; j < L; j++)
     {
-        int.TryParse(lines[i][j].ToString(), out int x);
-        mat[i, j] = x;
+        if (vis[i, j])
+            sum++;
     }
 }
-
-var max = 0;
-
-for (int i = 0; i < L; i++)
+Console.WriteLine("sum "+sum);
+void MoveHRight(int[,] mat, Point h, Point t, bool[,] vis)
 {
-    for (int j = 0; j < L; j++)
-    {
-        if (Highest(mat,i,j))
-            rez++;
-        var x = scenic(mat, i, j);
-        if (x > max)
-            max = x;
-    }
+    h.x++;
+     CheckPOints(h,t,vis);
+    vis[t.x, t.y] = true;
 }
-
-int scenic(int[,] mat, int i, int j)
+void MoveHRightT(int[,] mat, Point h, Point[] t, bool[,] vis)
 {
-    var s = 1;
-    //look left
-    if (i == 0)
-        return 0;
-    var tot = 0;
-    for (int k = i-1; k >=0; k--)
+    h.x++;
+    
+    CheckPOints(h, t[0], vis);
+    for (int i = 1; i < 9; i++)
     {
-        tot++;
-        if (mat[k,j]>= mat[i, j])
-           break;
+        CheckPOints(t[i - 1], t[i],vis);
     }
-    s*=tot;
-
-    //look up
-    if (j == 0)
-        return 0;
-    tot = 0;
-    for (int k = j-1; k >=0; k--)
-    {
-        tot++;
-        if (mat[i, k] >= mat[i, j])
-            break;
-    }
-    s *= tot;
-
-    //look right
-    if (i == L - 1)
-        return 0;
-    tot = 0;
-    for (int k = i + 1; k < L; k++)
-    {
-        tot++;
-        if (mat[k, j] >= mat[i, j])
-            break;
-    }
-    s *= tot;
-
-    //look down
-    tot = 0;
-    if (j == L - 1)
-        return 0;
-    for (int k = j + 1; k < L; k++)
-    {
-        tot++;
-        if (mat[i, k] >= mat[i, j])
-             break;
-    }
-    s *= tot;
-    return s;
+    vis[t[8].x, t[8].y] = true;
 }
 
-bool Highest(int[,] mat, int i, int j)
+void MoveHUp(int[,] mat, Point h, Point t, bool[,] vis)
 {
-    //look left
-    if (i == 0)
-        return true;
-    var tot = 0;
-    for (int k = 0; k < i; k++)
-    {
-        if (mat[k, j] < mat[i, j])
-            tot++;
-    }
-    if(tot==i) return true;
+    h.y--;
+    CheckPOints(h, t, vis);
+    vis[t.x, t.y] = true;
 
-    //look up
-    if(j==0) 
-        return true;
-    tot = 0;
-    for (int k = 0; k < j; k++)
+}
+void MoveHUpT(int[,] mat, Point h, Point[] t, bool[,] vis)
+{
+    h.y--;
+    CheckPOints(h, t[0], vis);
+    for (int i = 1; i < 9; i++)
     {
-        if (mat[i, k] < mat[i, j])
-            tot++;
+        CheckPOints(t[i - 1], t[i], vis);
     }
-    if(tot==j) return true;
+    vis[t[8].x, t[8].y] = true;
 
-    //look right
-    if (i == L - 1)
-        return true;
-    tot = 0;
-    for (int k = i+1; k < L; k++)
-    {
-        if (mat[k, j] < mat[i, j])
-            tot++;
-    }
-    if(tot==L-i-1)
-        return true;
+}
+void MoveHLeft(int[,] mat, Point h, Point t, bool[,] vis)
+{
+    h.x--;
+    CheckPOints(h, t, vis);
+    vis[t.x, t.y] = true;
 
-    //look down
-    tot = 0;
-    if(j==L-1)
-        return true;
-    for (int k = j+1; k < L; k++)
+}
+void MoveHLeftT(int[,] mat, Point h, Point[] t, bool[,] vis)
+{
+    h.x--;
+    CheckPOints(h, t[0], vis);
+    for (int i = 1; i < 9; i++)
     {
-        if (mat[i, k] < mat[i, j])
-            tot++;
+        CheckPOints(t[i - 1], t[i], vis);
     }
-    if(tot == L - j - 1)
-        return true;
-    return false;
+    vis[t[8].x, t[8].y] = true;
+
+}
+void MoveHDOwn(int[,] mat, Point h, Point t, bool[,] vis)
+{
+    h.y++;
+    CheckPOints(h, t, vis);
+
+    vis[t.x, t.y] = true;
+}
+void MoveHDOwnT(int[,] mat, Point h, Point[] t, bool[,] vis)
+{
+    h.y++;
+    CheckPOints(h, t[0], vis);
+    for (int i = 1; i < 9; i++)
+    {
+        CheckPOints(t[i - 1], t[i], vis);
+    }
+    vis[t[8].x, t[8].y] = true;
+}
+void MoveCloser(Point h, Point t, bool[,] vis)
+{
+    if(Math.Abs(h.y-t.y)>1)
+        if (h.y - t.y > 1)
+        {
+            if (h.x - t.x > 0)
+            {
+                t.x++;
+                t.y++;
+            }
+            else
+            {
+                t.x--;
+                t.y++;
+            }
+        }
+        else
+        {
+            if (h.x - t.x > 0)
+            {
+                t.x++;
+                t.y--;
+            }
+            else
+            {
+                t.x--;
+                t.y--;
+            }
+        }
+    if (Math.Abs(h.x - t.x) > 1)
+        if (h.x - t.x > 1)
+        {
+            if (h.y - t.y > 0)
+            {
+                t.y++;
+                t.x++;
+            }
+            else
+            {
+                t.y--;
+                t.x++;
+            }
+        }
+        else
+        {
+            if (h.y - t.y > 0)
+            {
+                t.y++;
+                t.x--;
+            }
+            else
+            {
+                t.y--;
+                t.x--;
+            }
+        }
 }
 
-Console.WriteLine("result "+max);
+void CheckPOints(Point h, Point t, bool[,] vis)
+{
+
+    if (distHoriz(h, t) == 0 && distVert(h, t) == 0)
+        ;
+    else if (distHoriz(h, t) == 1 && distVert(h, t) == 1)
+        ;
+    else if (distHoriz(h, t) == 0 && distVert(h, t) == 1)
+        ;
+    else if (distHoriz(h, t) == 1 && distVert(h, t) == 1)
+        ;
+    else if (distHoriz(h, t) == 1 && distVert(h, t) == 0)
+        ;
+    else if (distHoriz(h, t) == 2 && distVert(h, t) == 0)
+    {
+        if(h.x-t.x==2)
+            t.x++;
+        else
+        {
+            t.x--;
+        }
+    }
+    else if (distVert(h,t)==2 && distHoriz(h,t)==0)
+    {
+        if (h.y - t.y == 2)
+            t.y++;
+        else
+        {
+            t.y--;
+        }
+    }
+    else
+    {
+        MoveCloser(h, t, vis);
+    }
+}
+
+int distHoriz(Point h, Point t)
+{
+    return Math.Abs(h.x - t.x);
+}
+int distVert(Point h, Point t)
+{
+    return Math.Abs(h.y - t.y);
+}
+Console.WriteLine("result "+rez);
+class Point
+{
+    public int x { get; set; }
+    public int y { get; set; }
+
+    public Point(int x, int y)
+    {
+        this.x = x;
+        this.y = y;
+    }
+}
