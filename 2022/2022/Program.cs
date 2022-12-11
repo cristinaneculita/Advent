@@ -11,76 +11,120 @@ using System.Runtime.CompilerServices;
 
 namespace Advent2022
 {
+    class Monkey
+    {
+        public List<double> Articles { get; set; }
+        public  operation op { get; set; }
+        public string OP2 { get; set; }
+        public int Divisible { get; set; }
+        public int IfYes { get; set; }
+        public int IfNo { get; set; }
+        public double Processedtime { get; set; }
+
+        public Monkey(List<double> articles, operation op, string op2, int divisible, int ifYes, int ifNo)
+        {
+            Articles = articles;
+            this.op = op;
+            OP2 = op2;
+            Divisible = divisible;
+            IfYes = ifYes;
+            IfNo = ifNo;
+        }
+
+        public Monkey()
+        {
+            Articles = new List<double>();
+        }
+    }
+
+
+    public enum operation
+    {
+        mul,
+        add
+    }
+
     class Program
     {
 
         static void Main(string[] args)
         {
-            long rez = 0;
+            double rez = 0;
             string[] lines = System.IO.File.ReadAllLines("input1.txt");
-            long x = 1;
-            int cycle = 1;
-            var ccicles = new int[] { 20, 60, 100, 140, 180, 220 };
-            var sprinte = new int[] { 0, 1, 2 };
-            var spritel = 0;
-            var screen = new bool[6, 40];
-            var pos = 0;
-            foreach (var line in lines)
-            {
-                if (sprinte.Contains(pos))
-                {
-                    screen[(cycle - 1) / 40, (cycle-1)%40] = true;
-                }
+            var mon = new List<Monkey>();
 
-                pos = (pos + 1) %40;
-                sprinte[1] = (int)x;
-                sprinte[0] = (int)x - 1;
-                sprinte[2] = (int)x + 1;
-                
-                if (line == "noop")
+            var m1 = new Monkey(new List<double>() { 76, 88, 96, 97, 58, 61, 67 }, operation.mul, "19", 3, 2, 3);
+            mon.Add(m1);
+            m1 = new Monkey(new List<double>() { 93, 71, 79, 83, 69, 70, 94, 98 }, operation.add, "8", 11, 5, 6);
+            mon.Add(m1);
+            m1 = new Monkey(new List<double>() { 50, 74, 67, 92, 61, 76 }, operation.mul, "13", 19, 3, 1);
+            mon.Add(m1);
+            m1 = new Monkey(new List<double>() { 76, 92 }, operation.add, "6", 5, 1, 6);
+            mon.Add(m1);
+            m1 = new Monkey(new List<double>() { 74, 94, 55, 87, 62 }, operation.add, "5", 2, 2, 0);
+            mon.Add(m1);
+            m1 = new Monkey(new List<double>() { 59, 62, 53, 62 }, operation.mul, "old", 7, 4, 7);
+            mon.Add(m1);
+            m1 = new Monkey(new List<double>() { 62 }, operation.add, "2", 17, 5, 7);
+            mon.Add(m1);
+            m1 = new Monkey(new List<double>() { 85, 54, 53 }, operation.add, "3", 13, 4, 0);
+            mon.Add(m1);
+
+
+            //var m1 = new Monkey(new List<double>() { 79, 98 }, operation.mul, "19", 23, 2, 3);
+            //mon.Add(m1);
+            //m1 = new Monkey(new List<double>() { 54, 65, 75, 74 }, operation.add, "6", 19, 2, 0);
+            //mon.Add(m1);
+            //m1 = new Monkey(new List<double>() { 79, 60, 97 }, operation.mul, "old", 13, 1, 3);
+            //mon.Add(m1);
+            //m1 = new Monkey(new List<double>() { 74 }, operation.add, "3", 17, 0, 1);
+            //mon.Add(m1);
+            double worryl = 1;
+
+            
+            for (int i = 0; i < 10000; i++)
+            {
+
+                foreach (var monkey in mon)
                 {
-                    cycle++;
-                }
-                else
-                {
-                    var y = line.Split(" ");
-                    int.TryParse(y[1], out int y1);
-                    cycle++;
-                    
-                    if (sprinte.Contains(pos))
+                    foreach (var monkeyArticle in monkey.Articles)
                     {
-                        screen[(cycle - 1) / 40, (cycle - 1) % 40] = true;
+                        switch (monkey.op)
+                        {
+                            case operation.add:
+                                int.TryParse(monkey.OP2, out int op2);
+                                worryl = monkeyArticle + op2;
+                                break;
+                            case operation.mul:
+                                var t=int.TryParse(monkey.OP2, out int op);
+                                if (t) 
+                                    worryl = monkeyArticle * op;
+                                else 
+                                    worryl = monkeyArticle * monkeyArticle;
+                                break;
+
+                        }
+
+                        worryl = worryl % 9699690;
+                        if (worryl % monkey.Divisible == 0)
+                        {
+                            mon[monkey.IfYes].Articles.Add(worryl);
+                        }
+                        else
+                        {
+                            mon[monkey.IfNo].Articles.Add(worryl);
+                        }
+
+                        monkey.Processedtime++;
                     }
 
-                    pos = (pos + 1) % 40;
-                    cycle++;
-                    x += y1;
-                    sprinte[1] = (int)x;
-                    sprinte[0] = (int)x - 1;
-                    sprinte[2] = (int)x + 1;
+                    monkey.Articles = new List<double>();
                 }
             }
 
-
-            for (int i = 0; i < 6; i++)
-            {
-                for (int j = 0; j < 40; j++)
-                {
-                    if (screen[i, j])
-                        Console.Write("#");
-                    else
-                    {
-                        Console.Write(".");
-                    }
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine("sum " + rez);
-        }
-
-        private static long CalcStr(int cycle, long x)
-        {
-            return cycle * x;
+            mon = mon.OrderByDescending(x => x.Processedtime).ToList();
+            double d = mon[0].Processedtime * mon[1].Processedtime;
+            Console.WriteLine("sum " + d);
         }
     }
 }
