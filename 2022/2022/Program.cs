@@ -1,7 +1,10 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.Design;
 using System.Data;
@@ -11,120 +14,202 @@ using System.Runtime.CompilerServices;
 
 namespace Advent2022
 {
-    class Monkey
+    class Point : IEquatable<Point>
     {
-        public List<double> Articles { get; set; }
-        public  operation op { get; set; }
-        public string OP2 { get; set; }
-        public int Divisible { get; set; }
-        public int IfYes { get; set; }
-        public int IfNo { get; set; }
-        public double Processedtime { get; set; }
+        public int x { get; set; }
+        public int y { get; set; }
 
-        public Monkey(List<double> articles, operation op, string op2, int divisible, int ifYes, int ifNo)
+        public Point(int x, int y)
         {
-            Articles = articles;
-            this.op = op;
-            OP2 = op2;
-            Divisible = divisible;
-            IfYes = ifYes;
-            IfNo = ifNo;
+            this.x = x;
+            this.y = y;
         }
 
-        public Monkey()
+        public bool Equals(Point? other)
         {
-            Articles = new List<double>();
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return x == other.x && y == other.y;
         }
-    }
 
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((Point)obj);
+        }
 
-    public enum operation
-    {
-        mul,
-        add
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(x, y);
+        }
     }
 
     class Program
     {
-
+        private static int c = 143;
+        private static int l = 41;
+        static int min_dist = int.MaxValue;
         static void Main(string[] args)
         {
             double rez = 0;
-            string[] lines = System.IO.File.ReadAllLines("input1.txt");
-            var mon = new List<Monkey>();
-
-            var m1 = new Monkey(new List<double>() { 76, 88, 96, 97, 58, 61, 67 }, operation.mul, "19", 3, 2, 3);
-            mon.Add(m1);
-            m1 = new Monkey(new List<double>() { 93, 71, 79, 83, 69, 70, 94, 98 }, operation.add, "8", 11, 5, 6);
-            mon.Add(m1);
-            m1 = new Monkey(new List<double>() { 50, 74, 67, 92, 61, 76 }, operation.mul, "13", 19, 3, 1);
-            mon.Add(m1);
-            m1 = new Monkey(new List<double>() { 76, 92 }, operation.add, "6", 5, 1, 6);
-            mon.Add(m1);
-            m1 = new Monkey(new List<double>() { 74, 94, 55, 87, 62 }, operation.add, "5", 2, 2, 0);
-            mon.Add(m1);
-            m1 = new Monkey(new List<double>() { 59, 62, 53, 62 }, operation.mul, "old", 7, 4, 7);
-            mon.Add(m1);
-            m1 = new Monkey(new List<double>() { 62 }, operation.add, "2", 17, 5, 7);
-            mon.Add(m1);
-            m1 = new Monkey(new List<double>() { 85, 54, 53 }, operation.add, "3", 13, 4, 0);
-            mon.Add(m1);
-
-
-            //var m1 = new Monkey(new List<double>() { 79, 98 }, operation.mul, "19", 23, 2, 3);
-            //mon.Add(m1);
-            //m1 = new Monkey(new List<double>() { 54, 65, 75, 74 }, operation.add, "6", 19, 2, 0);
-            //mon.Add(m1);
-            //m1 = new Monkey(new List<double>() { 79, 60, 97 }, operation.mul, "old", 13, 1, 3);
-            //mon.Add(m1);
-            //m1 = new Monkey(new List<double>() { 74 }, operation.add, "3", 17, 0, 1);
-            //mon.Add(m1);
-            double worryl = 1;
-
             
-            for (int i = 0; i < 10000; i++)
+         
+
+            var i = 0;
+            string[] lines = System.IO.File.ReadAllLines("input1.txt");
+            c = lines[0].Length;
+            l = lines.Length;
+            var puz = new char[l, c];
+
+            var vis = new bool[l, c];
+            var dist = new int[l, c];
+            foreach (var line in lines)
             {
-
-                foreach (var monkey in mon)
+                var x = line.ToCharArray();
+                for (int j = 0; j < line.Length; j++)
                 {
-                    foreach (var monkeyArticle in monkey.Articles)
-                    {
-                        switch (monkey.op)
-                        {
-                            case operation.add:
-                                int.TryParse(monkey.OP2, out int op2);
-                                worryl = monkeyArticle + op2;
-                                break;
-                            case operation.mul:
-                                var t=int.TryParse(monkey.OP2, out int op);
-                                if (t) 
-                                    worryl = monkeyArticle * op;
-                                else 
-                                    worryl = monkeyArticle * monkeyArticle;
-                                break;
-
-                        }
-
-                        worryl = worryl % 9699690;
-                        if (worryl % monkey.Divisible == 0)
-                        {
-                            mon[monkey.IfYes].Articles.Add(worryl);
-                        }
-                        else
-                        {
-                            mon[monkey.IfNo].Articles.Add(worryl);
-                        }
-
-                        monkey.Processedtime++;
-                    }
-
-                    monkey.Articles = new List<double>();
+                    puz[i, j] = x[j];
                 }
+                i++;
             }
 
-            mon = mon.OrderByDescending(x => x.Processedtime).ToList();
-            double d = mon[0].Processedtime * mon[1].Processedtime;
-            Console.WriteLine("sum " + d);
+            int sl = 0, sc = 0, el = 0, ec = 0;
+            Stack<Point> q = new Stack<Point>();
+        
+            for (int j = 0; j < l; j++)
+            {
+                for (int k = 0; k < c; k++)
+                {
+                    dist[j, k] = Int32.MaxValue;
+                    if (puz[j, k] == 'S')
+                    {
+                        sl = j;
+                        sc = k;
+                        puz[j, k] = 'a';
+                        dist[j, k] = 0;
+                       
+                    }
+
+                    if (puz[j, k] == 'E')
+                    {
+                        el = j;
+                        ec = k;
+                        puz[j, k] = 'z';
+                    }
+
+                    if (puz[j, k] == 'a')
+                    {
+                        dist[j, k] = 0;
+                        q.Push(new Point(j, k));
+                    }
+
+                }
+            }
+           
+
+            while (q.Any())
+            {
+                Point p = q.Pop();
+                var xs = p.x - 1;
+                var ys = p.y;
+                if (isSqafeq(puz, p.x, p.y, xs, ys))
+                    if (dist[xs, ys] > dist[p.x, p.y] + 1)
+                    {
+                        dist[xs, ys] = dist[p.x, p.y] + 1;
+                        q.Push(new Point(xs, ys));
+                    }
+                xs = p.x + 1;
+                ys = p.y;
+                if (isSqafeq(puz, p.x, p.y, xs, ys))
+                    if (dist[xs, ys] > dist[p.x, p.y] + 1)
+                    {
+                        dist[xs, ys] = dist[p.x, p.y] + 1;
+                        q.Push(new Point(xs, ys));
+                    }
+                xs = p.x;
+                ys = p.y - 1;
+                if (isSqafeq(puz, p.x, p.y, xs, ys))
+                    if (dist[xs, ys] > dist[p.x, p.y] + 1)
+                    {
+                        dist[xs, ys] = dist[p.x, p.y] + 1;
+                        q.Push(new Point(xs, ys));
+                    }
+                xs = p.x;
+                ys = p.y + 1;
+                if (isSqafeq(puz, p.x, p.y, xs, ys))
+                    if (dist[xs, ys] > dist[p.x, p.y] + 1)
+                    {
+                        dist[xs, ys] = dist[p.x, p.y] + 1;
+                        q.Push(new Point(xs, ys));
+                    }
+
+            }
+
+            //for (int j = 0; j < l; j++)
+            //{
+            //    for (int k = 0; k < c; k++)
+            //    {
+            //        if (dist[j,k]!=Int32.MaxValue)
+            //            Console.Write(dist[j,k]);
+            //        else Console.Write("*");
+            //    }   
+            //    Console.WriteLine();
+            //}
+            //FindShortestPath(puz,vis,sl,sc,el,ec, ref min_dist, 0 );
+
+
+
+            Console.WriteLine("sum " + dist[el, ec]);
+        }
+
+        private static bool isSqafeq(char[,] puz, int xv, int yv, int x, int y)
+        {
+            return (x >= 0 && x < l && y >= 0 && y < c) && (puz[xv, yv] + 1 >= puz[x, y] );
+        }
+
+        //static void FindShortestPath(char[,] puz, bool[,] visited, int i, int j, int x, int y, ref int min_dist, int dist)
+        //{
+        //    if (i == x && j == y)
+        //    {
+        //        min_dist = Math.Min(min_dist, dist);
+        //        Console.WriteLine("dist " + min_dist);
+        //        return ;
+        //    }
+
+        //    visited[i, j] = true;
+        //    // go to the top cell
+        //    if (isSafe(puz, visited, i, j, i - 1, j))
+        //    {
+        //        FindShortestPath(puz, visited, i - 1, j, x, y, ref min_dist, dist + 1);
+        //    }
+        //    // go to the bottom cell
+        //    if (isSafe(puz, visited, i,j,i + 1, j))
+        //    {
+        //        FindShortestPath(puz, visited, i + 1, j, x, y, ref min_dist, dist + 1);
+        //    }
+
+        //    // go to the right cell
+        //    if (isSafe(puz, visited,i,j, i, j + 1))
+        //    {
+        //        FindShortestPath(puz, visited, i, j + 1, x, y, ref min_dist , dist + 1);
+        //    }
+
+        //    // go to the left cell
+        //    if (isSafe(puz, visited,i,j, i, j - 1))
+        //    {
+        //        FindShortestPath(puz, visited, i, j - 1, x, y, ref min_dist, dist + 1);
+        //    }
+
+        //    // backtrack: remove (i, j) from the visited matrix
+        //    visited[i,j] = false;
+
+        //}
+
+        private static bool isSafe(char[,] puz, bool[,] visited, int xv, int yv, int x, int y)
+        {
+            return (x >= 0 && x < l && y >= 0 && y < c) && (puz[xv, yv] + 1 == puz[x, y] || puz[xv, yv] == puz[x, y]) && !visited[x, y];
         }
     }
 }
