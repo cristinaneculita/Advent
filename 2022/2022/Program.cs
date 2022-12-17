@@ -10,398 +10,459 @@ using System.Drawing;
 using System.Net.Http.Headers;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.ComTypes;
-using System.Runtime.Serialization;
+using System.Windows.Markup;
 
 namespace Advent2022
 {
 
 
-   public class Result {
-   public long Lowest { get; set; }
-   public bool  CanFall { get; set; }
-
-   public Result(long lowest, bool canFall)
-   {
-       Lowest = lowest;
-       CanFall = canFall;
-   }
-   }
-
-   public class State:IEquatable<State>
-   {
-       public int[] View { get; set; }
-       public int  Wind { get; set; }
-       public int Rock { get; set; }
-       public long Maxy { get; set; }
-       public int  Numb{ get; set; }
-       public State(int[] view, int wind, int rock)
-       {
-           View = view;
-           Wind = wind;
-           Rock = rock;
-       }
-       public bool Equals(State? other)
-       {
-           if (ReferenceEquals(null, other)) return false;
-           if (ReferenceEquals(this, other)) return true;
-           var viewseq = false;
-           for (int i = 0; i < 7; i++)
-           {
-                if (other.View[i] != View[i])
-                    return false;
-           }
-           return Wind == other.Wind && Rock == other.Rock;
-       }
-
-       public override bool Equals(object? obj)
-       {
-           if (ReferenceEquals(null, obj)) return false;
-           if (ReferenceEquals(this, obj)) return true;
-           if (obj.GetType() != this.GetType()) return false;
-           return Equals((State)obj);
-       }
-
-       public override int GetHashCode()
-       {
-           return HashCode.Combine(View, Wind, Rock);
-       }
-       
-   }
-
-
-
-   public class Program
+    class Valve
     {
-        private static long height = 0;
-        private static long L = 1000000;
-        private static int l=7;
+        public string Name { get; set; }
+        public int Rate { get; set; }
+        public List<string> ValvesTo { get; set; }
+
+        public Valve(string name, int rate, List<string> valvesTo)
+        {
+            Name = name;
+            Rate = rate;
+            ValvesTo = valvesTo;
+        }
+    }
+
+    public class Program
+    {
         static void Main(string[] args)
         {
             var rez = 0;
             string[] lines = File.ReadAllLines("input1.txt");
-            int air = 0;
-            var tower = new int[L, l];
-            //nothing = 0
-            //current rock = 2
-            //stable rock = 1
-            var states = new List<State>();
-            var loop = 0;long heightloop = 0;
-            long rest = 0;
-            long howmany = 0;
-            for (long i = 0; i < 16000; i++)
+            var vales = new List<Valve>();
+            var count = lines.Length;
+            foreach (var line in lines)
             {
-                
-                var x = GetRock(i);
-                height = GetCurrentHeight(tower);
-                var xxx = GetView(tower, height);
-                var statenew = new State(xxx, air, x);
-                statenew.Maxy = height;
-                statenew.Numb = (int)i;
-                if (states.Contains(statenew))
-                {
-                    var xy = states.FirstOrDefault(s => s.Equals(statenew));
-                    Console.WriteLine("gasit "+ statenew.Numb + " "+statenew.Maxy);
-                    Console.WriteLine("gasit 2 "+ xy.Numb + " "+xy.Maxy);
-                    loop = statenew.Numb - xy.Numb;
-                    heightloop = statenew.Maxy - xy.Maxy;
-                     rest = 1000000000000 % loop;
-                     howmany = 1000000000000 / loop;
-                     if (i == rest + loop)
-                         break;
-                }
-                else
-                {
-                    states.Add(statenew);
-                }
-
-                PositionRock(x, tower);
-                Draw(tower, height + 6);
-                var f = new Result(height + 3, true);
-                while (true)
-                {
-                    PushAir(tower, lines[0][air], f.Lowest);
-                   // Draw(tower, height + 6);
-                    if (air < lines[0].Length - 1)
-                        air++;
-                    else air = 0;
-                    f = Fall(tower, f.Lowest);
-                   // Draw(tower, height + 6);
-                    if (!f.CanFall)
-                        break;
-
-                }
-
-                Rest(tower, f.Lowest);
-               
-
+                var x = line.Split("; ");
+                var y = x[0].Split(" ");
+                int.TryParse(y[1], out int y1);
+                var z = x[1].Split(", ").ToList();
+                var valve = new Valve(y[0], y1, z);
+                vales.Add(valve);
             }
 
-            height = GetCurrentHeight(tower);
-            long rez2 = howmany * heightloop + (height - heightloop);
-            Console.WriteLine("sum " + height);
-            Console.WriteLine("rez " +rez2);
+            var ci = vales.Count(r => r.Rate != 0);
+            ci++;
+            var paths = new int[count, count];
 
-        }
+            var interestValves = new List<Valve>();
+            interestValves.Add(vales.FirstOrDefault(v => v.Name == "AA"));
+            interestValves.AddRange(vales.Where(r => r.Rate != 0).ToList());
 
-        private static int[] GetView(int[,] tower,long height)
-        {
-            var res = new int[7];
-            for (int c = 0; c < 7; c++)
+            foreach (var valve1 in vales)
             {
-                int d = 0;
-                for (int i = (int)height; i >= 0; i--)
+                var i = vales.IndexOf(valve1);
+                foreach (var valve2 in valve1.ValvesTo)
                 {
-                    if (tower[i, c] == 0)
-                        d++;
-                    else
-                        break;
-                }
-
-                res[c] = d-1;
-            }
-
-            return res;
-
-        }
-
-        private static void Draw(int[,] tower, long h)
-        {
-          //  Drawm(tower,h);
-           
-        }
-
-        private static void Drawm(int[,] tower, long h)
-        {
-            Console.WriteLine();
-            for (long j = h; j >= 0 && j >= h - 30; j--)
-            {
-                for (int k = 0; k < l; k++)
-                {
-                    if (tower[j, k] == 0)
-                        Console.Write(".");
-                    if (tower[j, k] == 1)
-                        Console.Write("#");
-                    if (tower[j, k] == 2)
-                        Console.Write("@");
-                }
-                Console.WriteLine();
-            }
-        }
-
-        private static void Rest(int[,] tower, long h)
-        {
-            for (long i = h; i < h+4; i++)
-            {
-                for (int j = 0; j < 7; j++)
-                {
-                    if (tower[i, j] == 2)
-                        tower[i, j] = 1;
+                    var j = vales.FindIndex(x => x.Name == valve2);
+                    // paths[i, j] = new List<int>();
+                    // paths[i, j].Add(j);
+                    paths[i, j] = 1;
                 }
             }
-        }
 
-        private static Result Fall(int[,] tower, long lowest)
-        {
-
-            if (HasPlaceToFall(tower, lowest))
+            for (int i = 0; i < count; i++)
             {
-                FallRock(tower, lowest);
-                return new Result(lowest-1,true);
+                for (int j = 0; j < count; j++)
+                {
+                    if (paths[i, j] == 0 && i != j)
+                        FindShortestPath(paths, i, j, count);
+                }
             }
 
-            return new Result(lowest,false);
-        }
-
-        private static void FallRock(int[,] tower, long h)
-        {
-            for (long i = h; i < h + 4; i++)
+            var pathsInt = new int[ci, ci];
+            var nameint = interestValves.Select(iv => iv.Name);
+            var indi = 0;
+            int indj = 0;
+            for (int i = 0; i < count; i++)
             {
-                for (int j = 0; j < l; j++)
+                if (nameint.Contains(vales[i].Name))
                 {
-                    if (tower[i, j] == 2)
+                    for (int j = 0; j < count; j++)
                     {
-                        tower[i-1,j] = 2;
-                        tower[i, j] = 0;
-                    }
-                }
-            }
-        }
 
-        private static bool HasPlaceToFall(int[,] tower, long h)
-        {
-            for (long i = h; i < h+4; i++)
-            {
-                for (int j = 0; j < l; j++)
-                {
-                    if (i == 0)
-                        return false;
-                    if (tower[i,j]==2 && tower[i - 1, j] == 1)
-                        return false;
-                }
-            }
-
-            return true;
-        }
-
-        private static void PushAir(int[,] tower, char c, long h)
-        {
-            var unableToMove = false;
-            switch (c)
-            {
-                case '<':
-                    for (long i = h; i < h+4; i++)
-                    {
-                        if (tower[i, 0] == 2)
+                        if (nameint.Contains(vales[j].Name))
                         {
-                            unableToMove = true;
-                            break;
-                        }
-                        for (int j = 1; j < l; j++)
-                        {
-                            if(tower[i,j]==2 && tower[i, j - 1]==1)
-                            {
-                                unableToMove = true;
-                                break;
-                            }
+                            pathsInt[indi, indj] = paths[i, j];
+                            indj++;
                         }
                     }
 
-                    if (!unableToMove)
-                    {
-                        for (long i = h; i < h + 4; i++)
-                        {
-                            var vect2 = new int[7];
-                            for (int j = 0; j < 7; j++)
-                            {
-                                if (tower[i, j] == 2)
-                                {
-                                    vect2[j] = 2;
-                                    tower[i, j] = 0;
-                                }
-
-                            }
-                            for (int j = 1; j < l; j++)
-                            {
-                                if (vect2[j] == 2)
-                                    tower[i, j - 1] = vect2[j];
-                            }
-
-                            //tower[i, l - 1] = 0;
-                        }
-                    }
-                    break;
-                case '>':
-                    for (long i = h; i < h + 4; i++)
-                    {
-                        if (tower[i, l-1] == 2)
-                        {
-                            unableToMove = true;
-                            break;
-                        }
-
-                        for (int j = l - 2; j >= 0; j--)
-                        {
-                            if (tower[i,j]==2 && tower[i, j + 1] ==1)
-                            {
-                                unableToMove = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!unableToMove)
-                    {
-                        for (long i = h; i < h + 4; i++)
-                        {
-                            var vect2 = new int[7];
-                            for (int j = 0; j < 7; j++)
-                            {
-                                if (tower[i, j] == 2)
-                                {
-                                    vect2[j] = 2;
-                                    tower[i, j] = 0;
-                                }
-                               
-                            }
-                            for (int j = l - 2; j >= 0; j--)
-                            {
-                                if (vect2[j]==2)
-                                    tower[i, j + 1] = vect2[j];
-                            }
-
-                            //tower[i, 0] = 0;
-                        }
-                    }
-                    break;
-            }
-        }
-
-        private static void PositionRock(int i, int[,] tower)
-        {
-            
-            switch (i)
-            {
-                case 0:
-                    tower[height + 3, 2] = 2;
-                    tower[height + 3, 3] = 2;
-                    tower[height + 3, 4] = 2;
-                    tower[height + 3, 5] = 2;
-                    break;
-                case 1:
-                    tower[height + 3, 3] = 2;
-                    tower[height + 4, 2] = 2;
-                    tower[height + 4, 3] = 2;
-                    tower[height + 4, 4] = 2;
-                    tower[height + 5, 3] = 2;
-                    break;
-                case 2:
-                    tower[height + 3, 2] = 2;
-                    tower[height + 3, 3] = 2;
-                    tower[height + 3, 4] = 2;
-                    tower[height + 4, 4] = 2;
-                    tower[height + 5, 4] = 2;
-                    break;
-                case 3:
-                    tower[height + 3, 2] = 2;
-                    tower[height + 4, 2] = 2;
-                    tower[height + 5, 2] = 2;
-                    tower[height + 6, 2] = 2;
-                    break;
-                case 4:
-                    tower[height + 3, 2] = 2;
-                    tower[height + 3, 3] = 2;
-                    tower[height + 4, 2] = 2;
-                    tower[height + 4, 3] = 2;
-                    break;
-            }
-        }
-
-        private static int GetCurrentHeight(int[,] tower)
-        {
-            int i = 0;
-            bool exists;
-            for (i = 0; i < L; i++)
-            {
-                exists = false;
-                for (int j = 0; j < l; j++)
-                {
-                    if (tower[i, j] == 1)
-                    {
-                        exists = true;
-                        break;
-                    }
+                    indi++;
+                    indj = 0;
                 }
-                if(!exists)
-                { break; }
             }
-            return i;
+
+
+            //var min = 0;
+            //while (min < 30)
+            //{
+            //    var x = FindMostEfective(paths, valves);
+            //    GoThere(x, paths, valves, ref min);
+
+
+
+            //}
+            var nodeTurnedOn = new List<Valve>();
+            nodeTurnedOn.Add(interestValves[0]);
+            rez = (int)FindMax2(new int[] { 26, 26 }, new int[] { 0, 0 }, nodeTurnedOn, pathsInt, interestValves);
+
+            Console.WriteLine("sum " + rez);
+
         }
 
-        private static int GetRock(long i)
+        private static long FindMax2(int[] timeToGo, int[] curentNode, List<Valve> nodesTurnedOn, int[,] pathsInt,
+            List<Valve> interestValves)
         {
-            return (int)(i % 5);
+            long best = 0;
+            int actor = timeToGo[0] > timeToGo[1] ? 0 : 1;
+
+            var curIndex = curentNode[actor];
+
+            foreach (var valve in interestValves)
+            {
+                if (!nodesTurnedOn.Contains(valve) && interestValves[curIndex] != valve)
+                {
+                    var ind1 = interestValves.IndexOf(valve);
+                    nodesTurnedOn.Add(valve);
+                    int newTimeToGo = timeToGo[actor] - pathsInt[curIndex, ind1] - 1;
+
+                    if (newTimeToGo > 0)
+                    {
+                        var newTimes = new int[] { newTimeToGo, timeToGo[1 - actor] };
+                        var newLocs = new int[] { ind1, curentNode[1 - actor] };
+                        long gain = newTimeToGo * valve.Rate +
+                                    FindMax2(newTimes, newLocs, nodesTurnedOn, pathsInt, interestValves);
+                        if (best < gain)
+                        {
+                            best = gain;
+                        }
+                    }
+                    nodesTurnedOn.Remove(valve);
+                }
+            }
+
+            return best;
+
         }
+
+        //private static long FindMax(int start1, int start2, int timeToGO, int timefeltp1, int timeleftp2,
+        //    List<Valve> nodesTurnedOn, int[,] pathsInt, List<Valve> interestValves)
+        //{
+        //    long best = 0;
+        //    //  var currentValve = interestValves[start];
+        //    // var currentTurnedOn = new List<Valve>(nodesTurnedOn);
+        //    if (timefeltp1 == 0 && timeleftp2 == 0)
+        //    {
+        //        foreach (var valve in interestValves)
+        //        {
+        //            if (!nodesTurnedOn.Contains(valve) && interestValves[start1] != valve)
+        //            {
+        //                var ind1 = interestValves.IndexOf(valve);
+
+        //                nodesTurnedOn.Add(valve);
+        //                foreach (var valve2 in interestValves)
+        //                {
+        //                    if (!nodesTurnedOn.Contains(valve2) && interestValves[start2] != valve2)
+        //                    {
+        //                        var ind2 = interestValves.IndexOf(valve2);
+
+        //                        int newTimeToGo1 = timeToGO - pathsInt[start1, ind1] - 1;
+        //                        int newTimeToGO2 = timeToGO - pathsInt[start2, ind2] - 1;
+
+
+
+        //                        nodesTurnedOn.Add(valve2);
+
+        //                        if (newTimeToGo1 >= newTimeToGO2)
+        //                        {
+        //                            var dif = newTimeToGo1 - newTimeToGO2;
+        //                            if (newTimeToGO2 > 0)
+        //                            {
+        //                                long gain = newTimeToGo1 * valve.Rate +
+        //                                            FindMax(ind1, ind2, newTimeToGo1, 0, dif, nodesTurnedOn, pathsInt,
+        //                                                interestValves);
+        //                                if (gain > best)
+        //                                {
+        //                                    best = gain;
+        //                                }
+        //                            }
+        //                        }
+
+        //                        if (newTimeToGo1 < newTimeToGO2)
+        //                        {
+        //                            var dif = newTimeToGO2 - newTimeToGo1;
+        //                            if (newTimeToGo1 > 0)
+        //                            {
+        //                                long gain = newTimeToGO2 * valve2.Rate +
+        //                                            FindMax(ind1, ind2, newTimeToGO2, dif, 0, nodesTurnedOn, pathsInt,
+        //                                                interestValves);
+        //                                if (gain > best)
+        //                                {
+        //                                    best = gain;
+        //                                }
+        //                            }
+        //                        }
+
+
+        //                        nodesTurnedOn.Remove(valve2);
+
+
+
+
+
+        //                    }
+        //                }
+        //                nodesTurnedOn.Remove(valve);
+
+
+        //            }
+        //        }
+
+
+
+        //    }
+
+        //    if (timefeltp1 == 0 && timeleftp2 != 0)
+        //    {
+        //        foreach (var valve in interestValves)
+        //        {
+        //            if (!nodesTurnedOn.Contains(valve) && interestValves[start1] != valve)
+        //            {
+        //                var ind1 = interestValves.IndexOf(valve);
+        //                int newTimeToGo = timeToGO - pathsInt[start1, ind1] - 1;
+
+        //                nodesTurnedOn.Add(valve);
+        //                if (pathsInt[start1, ind1] + 1 >= timeleftp2)
+        //                {
+        //                    var dif = pathsInt[start1, ind1] + 1 - timeleftp2;
+        //                    if (newTimeToGo > 0)
+        //                    {
+        //                        long gain = timeleftp2 * valve.Rate +
+        //                                    FindMax(ind1, start2, timeToGO - timeleftp2, 0, dif, nodesTurnedOn, pathsInt,
+        //                                        interestValves);
+        //                        if (gain > best)
+        //                        {
+        //                            best = gain;
+        //                        }
+        //                    }
+
+        //                }
+
+        //                if (pathsInt[start1, ind1] + 1 < timeleftp2)
+        //                {
+        //                    var dif = -pathsInt[start1, ind1] - 1 + timeleftp2;
+        //                    if (newTimeToGo > 0)
+        //                    {
+        //                        long gain = FindMax(ind1, start2, timeToGO - newTimeToGo, dif, 0, nodesTurnedOn, pathsInt,
+        //                            interestValves);
+        //                        if (gain > best)
+        //                        {
+        //                            best = gain;
+        //                        }
+        //                    }
+
+        //                }
+        //                nodesTurnedOn.Remove(valve);
+
+        //            }
+        //        }
+        //    }
+
+        //    if (timefeltp1 != 0 && timeleftp2 == 0)
+        //    {
+        //        foreach (var valve2 in interestValves)
+        //        {
+        //            if (!nodesTurnedOn.Contains(valve2) && interestValves[start1] != valve2)
+        //            {
+        //                var ind2 = interestValves.IndexOf(valve2);
+        //                int newTimeToGo = timeToGO - pathsInt[start2, ind2] - 1;
+
+        //                nodesTurnedOn.Add(valve2);
+        //                if (newTimeToGo >= timefeltp1)
+        //                {
+        //                    var dif = pathsInt[start2, ind2] + 1 - timefeltp1;
+        //                    if (timefeltp1 > 0)
+        //                    {
+        //                        long gain = dif * valve2.Rate +
+        //                                    FindMax(start1, ind2, timeToGO - timefeltp1, dif, 0, nodesTurnedOn, pathsInt,
+        //                                        interestValves);
+        //                        if (gain > best)
+        //                        {
+        //                            best = gain;
+        //                        }
+        //                    }
+
+        //                }
+
+        //                if (pathsInt[start2, ind2] + 1 < timefeltp1)
+        //                {
+        //                    var dif = -pathsInt[start2, ind2] - 1 + timefeltp1;
+        //                    if (newTimeToGo > 0)
+        //                    {
+        //                        long gain = FindMax(start1, ind2, timeToGO - newTimeToGo, 0, dif, nodesTurnedOn, pathsInt,
+        //                            interestValves);
+        //                        if (gain > best)
+        //                        {
+        //                            best = gain;
+        //                        }
+        //                    }
+
+        //                }
+        //                nodesTurnedOn.Remove(valve2);
+
+        //            }
+        //        }
+        //    }
+
+        //    return best;
+        //}
+
+
+        //int minDistance(int[] dist, bool[] sptSet)
+        //{
+        //    // Initialize min value
+        //    int min = int.MaxValue, min_index = -1;
+
+        //    for (int v = 0; v < V; v++)
+        //        if (sptSet[v] == false && dist[v] <= min)
+        //        {
+        //            min = dist[v];
+        //            min_index = v;
+        //        }
+
+        //    return min_index;
+        //}
+        static int[] dijkstra(int[,] graph, int src, int V)
+        {
+            int[] dist
+                = new int[V]; // The output array. dist[i]
+            // will hold the shortest
+            // distance from src to i
+
+            // sptSet[i] will true if vertex
+            // i is included in shortest path
+            // tree or shortest distance from
+            // src to i is finalized
+            bool[] sptSet = new bool[V];
+
+            // Initialize all distances as
+            // INFINITE and stpSet[] as false
+            for (int i = 0; i < V; i++)
+            {
+                dist[i] = int.MaxValue;
+                sptSet[i] = false;
+            }
+
+            // Distance of source vertex
+            // from itself is always 0
+            dist[src] = 0;
+
+            // Find shortest path for all vertices
+            for (int count = 0; count < V - 1; count++)
+            {
+                // Pick the minimum distance vertex
+                // from the set of vertices not yet
+                // processed. u is always equal to
+                // src in first iteration.
+                int u = minDistance(dist, sptSet, V);
+
+                // Mark the picked vertex as processed
+                sptSet[u] = true;
+
+                // Update dist value of the adjacent
+                // vertices of the picked vertex.
+                for (int v = 0; v < V; v++)
+
+                    // Update dist[v] only if is not in
+                    // sptSet, there is an edge from u
+                    // to v, and total weight of path
+                    // from src to v through u is smaller
+                    // than current value of dist[v]
+                    if (!sptSet[v] && graph[u, v] != 0
+                                   && dist[u] != int.MaxValue
+                                   && dist[u] + graph[u, v] < dist[v])
+                        dist[v] = dist[u] + graph[u, v];
+            }
+
+            // print the constructed distance array
+            return dist;
+        }
+        static int minDistance(int[] dist, bool[] sptSet, int V)
+        {
+            // Initialize min value
+            int min = int.MaxValue, min_index = -1;
+
+            for (int v = 0; v < V; v++)
+                if (sptSet[v] == false && dist[v] <= min)
+                {
+                    min = dist[v];
+                    min_index = v;
+                }
+
+            return min_index;
+        }
+        private static void FindShortestPath(int[,] paths, int i, int j, int count)
+        {
+
+            var r = dijkstra(paths, i, count);
+            for (int k = 0; k < count; k++)
+            {
+                paths[i, k] = r[k];
+            }
+            //var queue = new Stack<int>();
+            //bool[] visited = new bool[count];
+            //visited[i] = true;
+            //queue.Push(i);
+            //var dist = 0;
+            //while (queue.Any())
+            //{
+            //    var f = queue.Pop();
+            //    dist++;
+            //    for (int k = 0; k < count; k++)
+            //    {
+            //        if (paths[f, k] == 1)
+            //        {
+            //            if(k==j)
+            //                return dist;
+            //            if (!visited[k])
+            //            {
+            //                visited[k]= true;
+            //                queue.Push(k);
+            //            }
+            //        }
+
+            //    }
+            //}
+
+            //return int.MaxValue;
+        }
+
+        //private static int Dijkstra(int[,] mat, int ii,int jj, int count )
+        //{
+        //    int dist = 0;
+
+        //    var x = ii; var y = jj;
+        //    var matdist = new int[count, count];
+        //    for (int i = 0; i < count; i++)
+        //    {
+        //        for (int j = 0; j < count; j++)
+        //        {
+        //            matdist[i, j] = Int32.MaxValue;
+        //        }
+        //    }
+        //    matdist[0, 0] = 0;
+
+
+        //}
+
     }
 
 }
