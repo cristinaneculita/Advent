@@ -6,349 +6,295 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.Design;
 using System.Data;
 using System.Diagnostics.Tracing;
+using System.Drawing;
 using System.Net.Http.Headers;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 
 namespace Advent2022
 {
-    class Point
-    {
-        public long x { get; set; }
-        public long y { get; set; }
 
-        public Point(long x, long y)
+
+    class Valve
+    {
+        public string Name { get; set; }
+        public int Rate { get; set; }
+        public List<string> ValvesTo { get; set; }
+
+        public Valve(string name, int rate, List<string> valvesTo)
         {
-            this.x = x;
-            this.y = y;
+            Name = name;
+            Rate = rate;
+            ValvesTo = valvesTo;
         }
     }
-
-    class Item
-    {
-        public Point Sensor { get; set; }
-        public Point Beacon { get; set; }
-        public long Dist { get; set; }
-        public Item(Point sensor, Point beacon)
-        {
-            Sensor = sensor;
-            Beacon = beacon;
-            Dist = Getdist(Beacon, Sensor);
-        }
-
-        private long Getdist(Point item1, Point item2)
-        {
-            return (Math.Abs(item1.x - item2.x) + Math.Abs(item1.y - item2.y));
-        }
-    }
-
 
     public class Program
     {
         static void Main(string[] args)
         {
-            double rez = 0;
-            var items = new List<Item>();
+            var rez = 0;
             string[] lines = File.ReadAllLines("input1.txt");
+            var vales = new List<Valve>();
+            var count = lines.Length;
             foreach (var line in lines)
             {
-                var x = line.Split(" ");
-                long.TryParse(x[0], out long x0);
-                long.TryParse(x[1], out long x1);
-                long.TryParse(x[2], out long x2);
-                long.TryParse(x[3], out long x3);
-
-                var item = new Item(new Point(x0, x1), new Point(x2, x3));
-                items.Add(item);
+                var x = line.Split("; ");
+                var y = x[0].Split(" ");
+                int.TryParse(y[1], out int y1);
+                var z = x[1].Split(", ").ToList();
+                var valve = new Valve(y[0], y1, z);
+                vales.Add(valve);
             }
 
-            long minx = int.MaxValue, miny = int.MaxValue, maxx = int.MinValue, maxy = int.MinValue;
+            var ci = vales.Count(r => r.Rate != 0);
+            ci++;
+            var paths = new int[count, count];
 
-            foreach (var item in items)
+            var interestValves = new List<Valve>();
+            interestValves.Add(vales.FirstOrDefault(v=>v.Name=="AA"));
+            interestValves.AddRange(vales.Where(r => r.Rate != 0).ToList());
+            
+            foreach (var valve1 in vales)
             {
-                if (item.Beacon.x < minx)
-                    minx = item.Beacon.x;
-                if (item.Beacon.y < miny)
-                    miny = item.Beacon.y;
-                if (item.Beacon.x > maxx)
-                    maxx = item.Beacon.x;
-                if (item.Beacon.y > maxy)
-                    maxy = item.Beacon.y;
-
-                if (item.Sensor.x < minx)
-                    minx = item.Sensor.x;
-                if (item.Sensor.y < miny)
-                    miny = item.Sensor.y;
-                if (item.Sensor.x > maxx)
-                    maxx = item.Sensor.x;
-                if (item.Sensor.y > maxy)
-                    maxy = item.Sensor.y;
-
+                var i =vales.IndexOf(valve1);
+                foreach (var valve2 in valve1.ValvesTo)
+                {
+                    var j = vales.FindIndex(x => x.Name == valve2);
+                    // paths[i, j] = new List<int>();
+                    // paths[i, j].Add(j);
+                    paths[i, j] = 1;
+                } 
             }
 
-            //var shift = -1440697;
-            ////var shift = 10;
-            //// var shiftx = 20;
-            //var shiftx = 2000000;
-            //foreach (var item in items)
+            for (int i = 0; i < count; i++)
+            {
+                for (int j = 0; j < count; j++)
+                {
+                    if (paths[i, j] == 0 && i != j)
+                        FindShortestPath(paths, i, j, count);
+                }
+            }
+            var pathsInt = new int[ci, ci];
+            var nameint = interestValves.Select(iv => iv.Name);
+            var indi = 0;
+            int indj = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (nameint.Contains(vales[i].Name))
+                {
+                    for (int j = 0; j < count; j++)
+                    {
+
+                        if (nameint.Contains(vales[j].Name))
+                        {
+                            pathsInt[indi, indj] = paths[i, j];
+                            indj++;
+                        }
+                    }
+                    indi++;
+                    indj = 0;
+                }
+            }
+
+
+            //var min = 0;
+            //while (min < 30)
             //{
-            //    item.Sensor.y += shift;
-            //    item.Beacon.y += shift;
-            //    item.Beacon.x += shiftx;
-            //    item.Sensor.x += shiftx;
+            //    var x = FindMostEfective(paths, valves);
+            //    GoThere(x, paths, valves, ref min);
+
+
+
             //}
+            var nodeTurnedOn = new List<Valve>();
+            nodeTurnedOn.Add(interestValves[0]);
+            rez = (int)FindMax(0, 30,30, nodeTurnedOn, pathsInt, interestValves);
+
+            Console.WriteLine("sum " + rez);
+
+        }
+
+        private static long FindMax(int start, int timeToGO1, int timetogo2, List<Valve> nodesTurnedOn, int[,] pathsInt, List<Valve> interestValves)
+        {
+            long best = 0;
+           //  var currentValve = interestValves[start];
+            // var currentTurnedOn = new List<Valve>(nodesTurnedOn);
+            foreach (var valve in interestValves)
+            {
+                if (!nodesTurnedOn.Contains(valve) && interestValves[start]!=valve)
+                {
+                    var ind = interestValves.IndexOf(valve);
+
+                    int newTimeToGo1 = timeToGO1 - pathsInt[start, ind] - 1;
+                    nodesTurnedOn.Add(valve);
+                    foreach (var valve2 in interestValves)
+                    {
+                        if (!nodesTurnedOn.Contains(valve2) && interestValves[start] != valve2)
+                        {
+
+                            int newtimetogo2 = timeToGO1 - pathsInt[start,ind] - 1;
+                        }
+                    }
 
 
-            //var notallowed = new bool[7000000];
-            ////var adjustedy = 2000000 + shift;
-            ////var adjustedy = 10;
-            //for (int adjustedy = -1350400; adjustedy <= 4000000 + shift; adjustedy++)
+                    if (newTimeToGo1 > 0)
+                    {
+                        long gain = newTimeToGo1 * valve.Rate +
+                                    FindMax(ind, newTimeToGo1, nodesTurnedOn, pathsInt, interestValves);
+                        if (gain > best)
+                        {
+                            best = gain;
+                        }
+                    }
+
+                    nodesTurnedOn.Remove(valve);
+                }
+            }
+
+            return best;
+
+
+        }
+
+       
+        //int minDistance(int[] dist, bool[] sptSet)
+        //{
+        //    // Initialize min value
+        //    int min = int.MaxValue, min_index = -1;
+
+        //    for (int v = 0; v < V; v++)
+        //        if (sptSet[v] == false && dist[v] <= min)
+        //        {
+        //            min = dist[v];
+        //            min_index = v;
+        //        }
+
+        //    return min_index;
+        //}
+        static int[] dijkstra(int[,] graph, int src, int V)
+        {
+            int[] dist
+                = new int[V]; // The output array. dist[i]
+            // will hold the shortest
+            // distance from src to i
+
+            // sptSet[i] will true if vertex
+            // i is included in shortest path
+            // tree or shortest distance from
+            // src to i is finalized
+            bool[] sptSet = new bool[V];
+
+            // Initialize all distances as
+            // INFINITE and stpSet[] as false
+            for (int i = 0; i < V; i++)
+            {
+                dist[i] = int.MaxValue;
+                sptSet[i] = false;
+            }
+
+            // Distance of source vertex
+            // from itself is always 0
+            dist[src] = 0;
+
+            // Find shortest path for all vertices
+            for (int count = 0; count < V - 1; count++)
+            {
+                // Pick the minimum distance vertex
+                // from the set of vertices not yet
+                // processed. u is always equal to
+                // src in first iteration.
+                int u = minDistance(dist, sptSet, V);
+
+                // Mark the picked vertex as processed
+                sptSet[u] = true;
+
+                // Update dist value of the adjacent
+                // vertices of the picked vertex.
+                for (int v = 0; v < V; v++)
+
+                    // Update dist[v] only if is not in
+                    // sptSet, there is an edge from u
+                    // to v, and total weight of path
+                    // from src to v through u is smaller
+                    // than current value of dist[v]
+                    if (!sptSet[v] && graph[u, v] != 0
+                                   && dist[u] != int.MaxValue
+                                   && dist[u] + graph[u, v] < dist[v])
+                        dist[v] = dist[u] + graph[u, v];
+            }
+
+            // print the constructed distance array
+            return dist;
+        }
+        static int minDistance(int[] dist, bool[] sptSet, int V)
+        {
+            // Initialize min value
+            int min = int.MaxValue, min_index = -1;
+
+            for (int v = 0; v < V; v++)
+                if (sptSet[v] == false && dist[v] <= min)
+                {
+                    min = dist[v];
+                    min_index = v;
+                }
+
+            return min_index;
+        }
+        private static void FindShortestPath(int[,] paths, int i, int j, int count)
+        {
+            
+           var r =  dijkstra(paths, i, count);
+           for (int k = 0; k < count; k++)
+           {
+                paths[i, k] = r[k];
+           }
+            //var queue = new Stack<int>();
+            //bool[] visited = new bool[count];
+            //visited[i] = true;
+            //queue.Push(i);
+            //var dist = 0;
+            //while (queue.Any())
             //{
-            //    if (adjustedy % 100 == 0)
+            //    var f = queue.Pop();
+            //    dist++;
+            //    for (int k = 0; k < count; k++)
             //    {
-            //        Console.WriteLine(adjustedy);
-            //    }
-
-            //    // for (int i = 0 + shiftx; i < 4000000 + shiftx; i++)
-
-            //    foreach (var item in items)
-            //    {
-            //        //var dist = Getdist(item.Beacon, item.Sensor);
-            //        if (AroundTarget(item, item.Dist, adjustedy))
+            //        if (paths[f, k] == 1)
             //        {
-            //            var difFromTarget = Math.Abs(adjustedy - item.Sensor.y);
-            //            var distleft = item.Dist - difFromTarget;
-            //            MarkNotAllowedNew(distleft, notallowed, adjustedy, item);
+            //            if(k==j)
+            //                return dist;
+            //            if (!visited[k])
+            //            {
+            //                visited[k]= true;
+            //                queue.Push(k);
+            //            }
             //        }
 
-            //        if (item.Beacon.y == adjustedy)
-            //            notallowed[item.Beacon.x] = true;
-            //        if (item.Sensor.y == adjustedy)
-            //            notallowed[item.Sensor.x] = true;
-            //        //MarkNotAllowed(item, notallowed, adjustedy);
-            //    }
-
-
-
-
-            //    for (int i = 0 + shiftx; i < 4000000 + shiftx; i++)
-            //    {
-            //        if (notallowed[i] == false)
-            //        {
-            //            Console.WriteLine("x= " + (i - shiftx));
-            //            Console.WriteLine("y= " + (adjustedy - shift));
-            //        }
-
-            //        notallowed[i] = false;
-
-
-            //    }
-            //    //Console.WriteLine(adjustedy + " ");
-            //}
-            //foreach (var item in items)
-            //{
-            //    var dist = Getdist(item.Beacon, item.Sensor);
-            //    if (AroundTarget(item, dist, adjustedy))
-            //    {
-            //        var difFromTarget = Math.Abs(adjustedy - item.Sensor.y);
-            //        var distleft = dist - difFromTarget;
-            //        MarkNotAllowedNew(distleft, notallowed, adjustedy, item);
-            //    }
-
-            //    //MarkNotAllowed(item, notallowed, adjustedy);
-            //}
-
-            //foreach (var item in items)
-            //{
-            //    if (item.Beacon.y == adjustedy)
-            //        notallowed[item.Beacon.x] = false;
-            //}
-
-
-            //for (int i = 0; i < 7000000; i++)
-            //{
-            //    if (notallowed[i])
-            //        rez++;
-            //}
-            //distanta fata de toate sursele este mai mare decat distanta itemului
-            var point = new Point(0, 0);
-            var howmany = 0;
-            var tot = items.Count;
-            var marked = new int[4000000];
-            var cand = new List<Point>();
-            long xm, ym;
-
-            foreach (var item in items)
-            {
-                var i = item.Dist + 1;
-                for (int j = 0; j < i; j++)
-                {
-                    xm = item.Sensor.x - j;
-                    ym = item.Sensor.y - i + j;
-                    //if (adsustedy == ym) notallowed[xm] = true;
-                    //if (item.Beacon.x == xm && item.Beacon.y == ym)
-                    //    found = true;
-                    cand.Add(new Point(xm, ym));
-                }
-
-                //stanga-jos
-                for (int j = 0; j < i; j++)
-                {
-                    xm = item.Sensor.x - i + j;
-                    ym = item.Sensor.y - i + j;
-                    //if (adsustedy == ym) notallowed[xm] = true;
-                    //if (item.Beacon.x == xm && item.Beacon.y == ym)
-                    //    found = true;
-                    cand.Add(new Point(xm, ym));
-                }
-
-                //jos-dr
-                for (int j = 0; j < i; j++)
-                {
-                    xm = item.Sensor.x + j;
-                    ym = item.Sensor.y + i - j;
-                    //if (adsustedy == ym) notallowed[xm] = true;
-                    //if (item.Beacon.x == xm && item.Beacon.y == ym)
-                    //    found = true;
-                    cand.Add(new Point(xm, ym));
-                }
-
-                //dreapta-sus
-                for (int j = 0; j < i; j++)
-                {
-                    xm = item.Sensor.x + i - j;
-                    ym = item.Sensor.y - j;
-                    //if (adsustedy == ym) notallowed[xm] = true;
-                    //if (item.Beacon.x == xm && item.Beacon.y == ym)
-                    //    found = true;
-                    cand.Add(new Point(xm, ym));
-                }
-            }
-            //for (int i = 0; i < 4000000; i++)
-            //{
-            //    foreach (var item in items)
-            //    {
-            //        var difx = Math.Abs(item.Sensor.x - i);
-            //        for (int j = 0; j < 4000000; j++)
-            //        {
-            //            if ((difx + Math.Abs(item.Sensor.y - j) > item.Dist))
-            //                marked[j]++;
-            //        }
-            //    }
-
-            //    for (int j = 0; j < 4000000; j++)
-            //    {
-            //        //if (marked[j] == 35)
-            //        //    Console.WriteLine("Ceva");
-            //        marked[j] = 0;
             //    }
             //}
 
-            foreach (var c in cand)
-            {
-                howmany = 0;
-                foreach (var item in items)
-                {
-                    if (Getdist(item.Sensor, c) > item.Dist)
-                        howmany++;
-                }
+            //return int.MaxValue;
+        }
 
-                if (howmany == tot)
-                {
-                    if (c.x is >= 0 and <= 4000000 && c.y >=0 && c.y <=4000000)
-                    Console.WriteLine($"x= {c.x} y={c.y}");
-                }
+        //private static int Dijkstra(int[,] mat, int ii,int jj, int count )
+        //{
+        //    int dist = 0;
+           
+        //    var x = ii; var y = jj;
+        //    var matdist = new int[count, count];
+        //    for (int i = 0; i < count; i++)
+        //    {
+        //        for (int j = 0; j < count; j++)
+        //        {
+        //            matdist[i, j] = Int32.MaxValue;
+        //        }
+        //    }
+        //    matdist[0, 0] = 0;
 
-            }
+          
+        //}
         
-
-        //for (int j = 0; j < 4000000; j++)
-                //{
-                //    point.y = j;
-                //    howmany = 0;
-                //    foreach (var item in items)
-                //    {
-                //        if (Getdist(item.Sensor, point) > item.Dist)
-                //            howmany++;
-                //    }
-
-                //    if (howmany == tot)
-                //        Console.WriteLine($"x= {i} y={j}");
-                //}
-            }
-           // Console.WriteLine("sum " + rez);
-        
-
-        
-        private static void MarkNotAllowedNew(long distleft, bool[] notallowed, int adjustedy, Item item)
-        {
-            for (long i = item.Sensor.x - distleft; i <= item.Sensor.x + distleft; i++)
-                notallowed[i] = true;
-        }
-
-        private static bool AroundTarget(Item item, long dist, int adjustedy)
-        {
-            var ymax = item.Sensor.y + dist;
-            var ymin = item.Sensor.y - dist;
-            if (ymin <= adjustedy && adjustedy <= ymax)
-                return true;
-            return false;
-        }
-
-        private static long Getdist(Point item1, Point item2)
-        {
-            return (Math.Abs(item1.x - item2.x) + Math.Abs(item1.y - item2.y));
-        }
-
-        private static void MarkNotAllowed(Item item, bool[] notallowed, int adsustedy)
-        {
-            var i = 1;
-            long xm, ym;
-            var found = false;
-            while (true)
-            {
-                //sus-stg
-                for (int j = 0; j < i; j++)
-                {
-                    xm = item.Sensor.x - j;
-                    ym = item.Sensor.y - i + j;
-                    if (adsustedy == ym) notallowed[xm] = true;
-                    if (item.Beacon.x == xm && item.Beacon.y == ym)
-                        found = true;
-                }
-                //stanga-jos
-                for (int j = 0; j < i; j++)
-                {
-                    xm = item.Sensor.x - i + j;
-                    ym = item.Sensor.y - i + j;
-                    if (adsustedy == ym) notallowed[xm] = true;
-                    if (item.Beacon.x == xm && item.Beacon.y == ym)
-                        found = true;
-                }
-                //jos-dr
-                for (int j = 0; j < i; j++)
-                {
-                    xm = item.Sensor.x + j;
-                    ym = item.Sensor.y + i - j;
-                    if (adsustedy == ym) notallowed[xm] = true;
-                    if (item.Beacon.x == xm && item.Beacon.y == ym)
-                        found = true;
-                }
-                //dreapta-sus
-                for (int j = 0; j < i; j++)
-                {
-                    xm = item.Sensor.x + i - j;
-                    ym = item.Sensor.y - j;
-                    if (adsustedy == ym) notallowed[xm] = true;
-                    if (item.Beacon.x == xm && item.Beacon.y == ym)
-                        found = true;
-                }
-
-                if (found)
-                    break;
-                i++;
-            }
-        }
     }
 
 }
