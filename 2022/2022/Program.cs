@@ -7,7 +7,9 @@ using System.ComponentModel.Design;
 using System.Data;
 using System.Diagnostics.Tracing;
 using System.Drawing;
+using System.Linq;
 using System.Net.Http.Headers;
+using System.Net.NetworkInformation;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Windows.Markup;
@@ -15,291 +17,303 @@ using System.Windows.Markup;
 namespace Advent2022
 {
 
-    public class Cubelet
-    {
-        public int x { get; set; }
-        public int y  { get; set; }
-        public int z { get; set; }
+    public class Blueprint
 
-        public Cubelet(int x, int y, int z)
+    {
+        public int Id { get; set; }
+        public int OreRobot { get; set; }
+        public int ClayRobot { get; set; }
+        public Tuple<int, int> Obsidian { get; set; }
+        public Tuple<int, int> Geode { get; set; }
+
+        public Blueprint(int id, int oreRobot, int clayRobot, Tuple<int, int> obsidian, Tuple<int, int> geode)
         {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            SE = 6;
+            Id = id;
+            OreRobot = oreRobot;
+            ClayRobot = clayRobot;
+            Obsidian = obsidian;
+            Geode = geode;
+        }
+    }
+
+    public class state : IEquatable<state>
+    {
+        public int Ore { get; set; }
+        public int Clay { get; set; }
+        public int Obs { get; set; }
+        public int Geode { get; set; }
+        public int OreRObs { get; set; }
+        public int ClayRobs { get; set; }
+        public int ObsRobs { get; set; }
+        public int GeodeRobs { get; set; }
+        public int Time { get; set; }
+
+        public state(int ore, int clay, int obs, int geode, int oreRObs, int clayRobs, int obsRobs, int geodeRobs, int time)
+        {
+            Ore = ore;
+            Clay = clay;
+            Obs = obs;
+            Geode = geode;
+            OreRObs = oreRObs;
+            ClayRobs = clayRobs;
+            ObsRobs = obsRobs;
+            GeodeRobs = geodeRobs;
+            Time = time;
         }
 
-        public int SE {get; set; }
+        public bool Equals(state? other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return Ore == other.Ore && Clay == other.Clay && Obs == other.Obs && Geode == other.Geode && OreRObs == other.OreRObs && ClayRobs == other.ClayRobs && ObsRobs == other.ObsRobs && GeodeRobs == other.GeodeRobs && Time == other.Time;
+        }
 
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((state)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = new HashCode();
+            hashCode.Add(Ore);
+            hashCode.Add(Clay);
+            hashCode.Add(Obs);
+            hashCode.Add(Geode);
+            hashCode.Add(OreRObs);
+            hashCode.Add(ClayRobs);
+            hashCode.Add(ObsRobs);
+            hashCode.Add(GeodeRobs);
+            hashCode.Add(Time);
+            return hashCode.ToHashCode();
+        }
     }
 
     public class Program
     {
+        private static Dictionary<state, int> dict;
+
         static void Main(string[] args)
         {
             var rez = 0;
             string[] lines = File.ReadAllLines("input1.txt");
-            var cubes = new List<Cubelet>();
+            //var sum1 = 0;
+            //int i = 1;
+            //foreach (var line in lines)
+            //{
+            //    var x = int.TryParse(line, out int xx);
+            //    sum1 += i * xx;
+            //    i++;
+            //}
+            //Console.WriteLine("sum1 "+ sum1);
+            var blues = new List<Blueprint>();
             foreach (var line in lines)
             {
-                var x = line.Split(",");
+                var x = line.Split(" ");
                 int.TryParse(x[0], out int x0);
                 int.TryParse(x[1], out int x1);
                 int.TryParse(x[2], out int x2);
+                int.TryParse(x[3], out int x3);
+                int.TryParse(x[4], out int x4);
+                int.TryParse(x[5], out int x5);
+                int.TryParse(x[6], out int x6);
 
-                cubes.Add(new Cubelet(x0,x1,x2));
+                var blu = new Blueprint(x0, x1, x2, new Tuple<int, int>(x3, x4), new Tuple<int, int>(x5, x6));
+
+                blues.Add(blu);
+            }
+
+            long sum = 0;
+            Random r = new Random();
+            foreach (var blu in blues)
+            {
+
+
+                int ore = 0;
+                int clay = 0;
+                int obsidian = 0;
+                int geode = 0;
+                int OreRobs = 1;
+                int ClayRobs = 0;
+                int ObsRob = 0;
+                int GeodeRob = 0;
+                dict = new Dictionary<state, int>();
+                var x = GetMaxGeode(ore, clay, obsidian, geode, OreRobs, ClayRobs, ObsRob, GeodeRob, 24, blu, r);
+                sum += x * blu.Id;
+                Console.WriteLine(x);
+                //for (int i = 0; i < 24; i++)
+                //{
+                //    bool createdGeode, createdObsidianRob, createdClayRob, createdOreRob;
+                //    if (ore >= blu.Geode.Item1 && obsidian >= blu.Geode.Item2)
+                //    {
+                //        createdGeode = true;
+                //        ore -= blu.Geode.Item1;
+                //        obsidian-= blu.Geode.Item2;
+                //    }
+                //    else if (ore >= blu.Obsidian.Item1 && clay >= blu.Obsidian.Item2)
+                //    {
+                //        createdObsidianRob = true;
+                //        ore-= blu.Obsidian.Item1;
+                //        clay-= blu.Obsidian.Item2;
+                //    }
+                //    else if(clay)
+
+                //    ore = ore + OreRobs;
+                //    if (ore > blu.OreRobot)
+                //    {
+                //        ore-=blu.OreRobot;
+                //        OreRobs++;
+                //    }
+
+
+                //    clay = clay + ClayRobs;
+                //    if(clay)
+
+
+
+                //}
+
+
+
 
             }
-            rez =SumCubes(cubes);
 
-
-
-
-            var rez2 =PartTwo(lines);
-     
-
-            Console.WriteLine("sum " + rez);
-            Console.WriteLine(rez2);
+            Console.WriteLine("sum " + sum);
 
         }
-        public static string PartTwo(string[] lines)
+
+        private static int GetMaxGeode(int ore, int clay, int obsidian, int geode, int oreRobs, int clayRobs,
+            int obsRob, int geodeRob, int time, Blueprint blu, Random r)
         {
-            var neighbors = new List<(int x, int y, int z)> { (1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1) };
-            var linesi = lines.Select(x => x.Split(",").Select(int.Parse).ToArray());
-            var cubes = linesi.Select(cube => (x: cube[0], y: cube[1], z: cube[2])).ToHashSet();
-            var answer = 0;
-            var maxX = cubes.Max(x => x.x);
-            var maxY = cubes.Max(y => y.y);
-            var maxZ = cubes.Max(z => z.z);
-            var minX = cubes.Min(x => x.x);
-            var minY = cubes.Min(y => y.y);
-            var minZ = cubes.Min(z => z.z);
-
-            var xRange = Enumerable.Range(minX, maxX + 1).ToList();
-            var yRange = Enumerable.Range(minY, maxY + 1).ToList();
-            var zRange = Enumerable.Range(minZ, maxZ + 1).ToList();
-
-
-            bool isOutside((int x, int y, int z) cube)
+            int gain = 0;
+            state x = new state(ore, clay, obsidian, geode, oreRobs, clayRobs,
+            obsRob, geodeRob, time);
+            if (time == 0)
             {
-                if (cubes.Contains(cube)) return false;
-
-                var checkedCubes = new HashSet<(int x, int y, int z)>();
-                var queue = new Queue<(int x, int y, int z)>();
-                queue.Enqueue(cube);
-                while (queue.Any())
-                {
-                    var tempCube = queue.Dequeue();
-                    if (checkedCubes.Contains(tempCube)) continue;
-                    checkedCubes.Add(tempCube);
-                    if (!xRange.Contains(tempCube.x) || !yRange.Contains(tempCube.y) || !zRange.Contains(tempCube.z))
-                    {
-                        return true;
-                    }
-                    if (!cubes.Contains(tempCube))
-                    {
-                        foreach (var (dx, dy, dz) in neighbors)
-                        {
-                            queue.Enqueue((tempCube.x + dx, tempCube.y + dy, tempCube.z + dz));
-                        }
-                    }
-                }
-                return false;
+                //if (!dict.ContainsKey(x))
+                //   dict.Add(x,geode);
+                return geode;
             }
-            foreach (var (x, y, z) in cubes)
+
+            var best = 0;
+            //pick to make geode robot
+            if (ore >= blu.Geode.Item1 && obsidian >= blu.Geode.Item2)
             {
-                foreach (var (dx, dy, dz) in neighbors)
+                x = new state(ore + oreRobs - blu.Geode.Item1, clay + clayRobs, obsidian + obsRob - blu.Geode.Item2,
+                    geode + geodeRob, oreRobs,
+                    clayRobs, obsRob, geodeRob + 1, time - 1);
+                if (dict.ContainsKey(x))
+                    gain = dict[x];
+                else
                 {
-                    if (isOutside((x + dx, y + dy, z + dz)))
-                    {
-                        answer++;
-                    }
+                    gain = GetMaxGeode(ore + oreRobs - blu.Geode.Item1, clay + clayRobs,
+                        obsidian + obsRob - blu.Geode.Item2, geode + geodeRob, oreRobs,
+                        clayRobs, obsRob, geodeRob + 1, time - 1, blu, r);
+                    if(x.Time!=0) dict.Add(x, gain);
                 }
-            }
-            return answer.ToString();
-        }
-
-        //private static List<Cubelet> FindTrappedCube(List<Cubelet> cubes, int i, int j, Tuple<bool, bool, bool, bool> sameLine)
-        //{
-        //    if (!sameLine.Item3)
-        //    {
-        //        var ctrline = FindAllCubesInLineZ(cubes[i], cubes[j]);
-        //        foreach (var cubeInLine in ctrline)
-        //        {
-        //            //daca are vecini pe x si pe y adauga la posibilul cub intern ce e intre vecini
-        //            //verifica daca e cub intern
-        //            var nx = FindNeighx(cubes, cubeInLine);
-        //            var ny = FindNeighy(cubes, cubeInLine);
-        //            if()
-        //            if (nx.Any() && ny.Any())
-        //            {
-        //                var candidate = FindCand(nx[0], nx[1], ny[0], ny[1], cubes[i], cubes[j]);
-        //                if (InternCube(cubes, candidate))
-        //                {
-        //                    return candidate;
-        //                }
-        //            }
-        //        }
-        //    }
-        //    if (!sameLine.Item2)
-        //    {
-        //        var ctrline = FindAllCubesInLineY(cubes[i], cubes[j]);
-        //        foreach (var cubeInLine in ctrline)
-        //        {
-        //            //daca are vecini pe x si pe y adauga la posibilul cub intern ce e intre vecini
-        //            //verifica daca e cub intern
-        //            var nx = FindNeighx(cubes, cubeInLine);
-        //            var nz = FindNeighz(cubes, cubeInLine);
-        //            if (nx.Any() && nz.Any())
-        //            {
-        //                var candidate = FindCand(nx[0], nx[1], cubes[i], cubes[j], nz[0], nz[1]);
-        //                if (InternCube(cubes, candidate))
-        //                {
-        //                    return candidate;
-        //                }
-        //            }
-        //        }
-        //    }
-        //    if (!sameLine.Item1)
-        //    {
-        //        var ctrline = FindAllCubesInLineX(cubes[i], cubes[j]);
-        //        foreach (var cubeInLine in ctrline)
-        //        {
-        //            //daca are vecini pe x si pe y adauga la posibilul cub intern ce e intre vecini
-        //            //verifica daca e cub intern
-        //            var nx = FindNeighy(cubes, cubeInLine);
-        //            var nz = FindNeighz(cubes, cubeInLine);
-        //            if (nx.Any() && nx.Any())
-        //            {
-        //                var candidate = FindCand(cubes[i], cubes[j],nx[0], nx[1], nz[0], nz[1]);
-        //                if (InternCube(cubes, candidate))
-        //                {
-        //                    return candidate;
-        //                }
-        //            }
-        //        }
-        //    }
-        //    return new List<Cubelet>();
-        //}
-
-        //private static List<Cubelet> FindNeighz(List<Cubelet> cubes, Cubelet cubeInLine)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //private static IEnumerable FindAllCubesInLineZ(Cubelet cube, Cubelet cubelet)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //private static bool InternCube(List<Cubelet> cubes, List<Cubelet> candidate)
-        //{
-        //    var totlist = new List<Cubelet>(cubes);
-        //    totlist.AddRange(candidate);
-        //    foreach (var cubelet in candidate)
-        //    {
-        //        if (!IsTrappedEx(totlist, cubelet))
-        //            return false;
-        //    }
-
-        //    return true;
-        //}
-
-        //private static bool IsTrappedEx(List<Cubelet> totlist, Cubelet cubelet)
-        //{
-        //    var nz = totlist.Any(c => c.x == cubelet.x && c.y == cubelet.y && Math.Abs(c.z - cubelet.z) == 1);
-        //    if (nz == false)
-        //        return false;
-        //    var ny = totlist.Any(c => c.x == cubelet.x && c.z == cubelet.z && Math.Abs(c.y - cubelet.y) == 1);
-        //    if(ny == false) 
-        //        return false;
-        //    var nx = totlist.Any(c => c.y == cubelet.y && c.z == cubelet.z && Math.Abs(c.x - cubelet.x) == 1);
-        //    return nx;
-
-        //}
-
-        //private static List<Cubelet> FindCand(Cubelet cubeletx1, Cubelet cubeletx2, Cubelet cubelety1, Cubelet cubelety2, Cubelet cubeletz1, Cubelet cubeletz2)
-        //{
-        //    var res = new List<Cubelet>();
-        //    int maxx = Math.Max(cubeletx1.x, cubeletx2.x);
-        //    int minx = Math.Min(cubeletx1.x, cubeletx2.x);
-
-        //    int maxy = Math.Max(cubelety1.y, cubelety2.y);
-        //    int miny = Math.Min(cubelety1.y, cubelety2.y);
-
-        //    int maxz = Math.Max(cubeletz1.z, cubeletz2.z);
-        //    int minz = Math.Min(cubeletz1.z, cubeletz2.z);
-
-        //    for (int i = minx+1; i < maxx; i++)
-        //    {
-        //        for (int j = miny+1; j < maxy; j++)
-        //        {
-        //            for (int k = minz+1; k < maxz; k++)
-        //            {
-        //                res.Add(new Cubelet(i,j,k));
-        //            }
-        //        }
-        //    }
-
-        //    return res;
-        //}
-
-        //private static List<Cubelet> FindAllCubesInLineY(Cubelet cubelet, Cubelet cubelet1)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //private static List<Cubelet> FindAllCubesInLineX(Cubelet cubelet, Cubelet cubelet1)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //private static List<Cubelet> FindNeighy(List<Cubelet> cubes, object cubeInLine)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //private static List<Cubelet> FindNeighx(List<Cubelet> cubes, object cubeInLine)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        private static int SumCubes(List<Cubelet> cubes)
-        {
-            for (int i = 0; i < cubes.Count; i++)
-            {
-                for (int j = i + 1; j < cubes.Count; j++)
+                if (gain > best)
                 {
-                    if (IsNeigh(cubes[i], cubes[j]))
-                    {
-                        cubes[i].SE--;
-                        cubes[j].SE--;
-                    }
+                    best = gain;
                 }
             }
-            return cubes.Sum(x => x.SE);
-        }
+        
+        //pick to make obsidian robot
 
-        private static Tuple<bool,bool,bool,bool> SameLine(Cubelet cube1, Cubelet cube2)
-        {
-            if (cube1.x == cube2.x && cube1.y == cube2.y && cube1.z != cube2.z)
-                return new Tuple<bool, bool, bool, bool>(true, true,true,false);
-            if (cube1.x == cube2.x && cube1.z == cube2.z && cube1.y != cube2.y)
-                return new Tuple<bool, bool, bool, bool>(true, true,false,true);
-            if (cube1.y == cube2.y && cube1.z == cube2.z && cube1.x != cube2.x)
-                return new Tuple<bool, bool, bool, bool>(true,false,true,true);
-            return new Tuple<bool, bool, bool, bool>(false,false,false,false);
-        }
+        if (ore >= blu.Obsidian.Item1 && clay >= blu.Obsidian.Item2)
+            {
+                x = new state(ore + oreRobs - blu.Obsidian.Item1, clay + clayRobs - blu.Obsidian.Item2,
+                    obsidian + obsRob, geode + geodeRob, oreRobs,
+                    clayRobs, obsRob + 1, geodeRob, time - 1);
+                if (dict.ContainsKey(x))
+                    gain = dict[x];
+                else
+                {
+                    gain = GetMaxGeode(ore + oreRobs - blu.Obsidian.Item1, clay + clayRobs - blu.Obsidian.Item2,
+                        obsidian + obsRob, geode + geodeRob, oreRobs,
+                        clayRobs, obsRob + 1, geodeRob, time - 1, blu, r);
+                    if (x.Time != 0) dict.Add(x, gain);
+                }
 
-        private static bool IsNeigh(Cubelet cube1, Cubelet cube2)
-        {
-            if(cube1.x == cube2.x && cube1.y == cube2.y && Math.Abs(cube1.z-cube2.z)==1)
-                return true;
-            if(cube1.x == cube2.x && cube1.z == cube2.z && Math.Abs(cube1.y - cube2.y) == 1)
-                return true;
-            if (cube1.y == cube2.y && cube1.z == cube2.z && Math.Abs(cube1.x - cube2.x) == 1)
-                return true;
-            return false;
+                if (gain > best)
+                {
+                    best = gain;
+                }
+            }
+            //pick to make a clay robbot
+            // else if(ore >= blu.ClayRobot || ore >= blu.OreRobot)
+            // {
+            if (ore >= blu.ClayRobot && clayRobs < blu.Obsidian.Item2)
+            {
+                x = new state(ore + oreRobs - blu.ClayRobot, clay + clayRobs, obsidian + obsRob,
+                    geode + geodeRob, oreRobs,
+                    clayRobs + 1, obsRob, geodeRob, time - 1);
+                if (dict.ContainsKey(x))
+                    gain = dict[x];
+                else
+                {
+                    gain = GetMaxGeode(ore + oreRobs - blu.ClayRobot, clay + clayRobs, obsidian + obsRob,
+                        geode + geodeRob, oreRobs,
+                        clayRobs + 1, obsRob, geodeRob, time - 1, blu, r);
+
+                    if (x.Time != 0) dict.Add(x, gain);
+                }
+
+                if (gain > best)
+                {
+                    best = gain;
+                }
+            }
+
+            //pick to make a ore robot
+            var maxorbSpent = blu.ClayRobot + blu.Obsidian.Item1 + blu.Geode.Item1;
+            if (ore >= blu.OreRobot && oreRobs < maxorbSpent)
+            {
+                x = new state(ore + oreRobs - blu.OreRobot, clay + clayRobs, obsidian + obsRob,
+                    geode + geodeRob, oreRobs + 1, clayRobs, obsRob, geodeRob, time - 1);
+                if (dict.ContainsKey(x))
+                    gain = dict[x];
+                else
+                {
+                    gain = GetMaxGeode(ore + oreRobs - blu.OreRobot, clay + clayRobs, obsidian + obsRob,
+                        geode + geodeRob, oreRobs + 1,
+                        clayRobs, obsRob, geodeRob, time - 1, blu, r);
+                    if (x.Time != 0) dict.Add(x, gain);
+                }
+
+                if (gain > best)
+                {
+                    best = gain;
+                }
+            }
+            //   }
+            //   else
+            //{
+            //if (dict.ContainsKey(x))
+            //    gain = dict[x];
+            //else { 
+            x = new state(ore + oreRobs, clay + clayRobs, obsidian + obsRob, geode + geodeRob,
+                oreRobs, clayRobs, obsRob, geodeRob, time - 1);
+            if (dict.ContainsKey(x))
+                gain = dict[x];
+            else
+            {
+                gain = GetMaxGeode(ore + oreRobs, clay + clayRobs, obsidian + obsRob, geode + geodeRob,
+                    oreRobs, clayRobs, obsRob, geodeRob, time - 1, blu, r);
+
+                if (x.Time != 0) dict.Add(x, gain);
+            }
+
+            //}
+            if (gain > best)
+                best = gain;
+            //}
+
+
+            return best;
+
         }
     }
 }
