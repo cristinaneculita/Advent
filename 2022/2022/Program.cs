@@ -33,7 +33,10 @@ namespace Advent2022
             ClayRobot = clayRobot;
             Obsidian = obsidian;
             Geode = geode;
+            MaxObs = Math.Max(Math.Max(oreRobot, clayRobot), Math.Max(obsidian.Item1, geode.Item1));
         }
+
+        public int MaxObs { get; set; }
     }
 
     public class state : IEquatable<state>
@@ -141,7 +144,7 @@ namespace Advent2022
                 int ObsRob = 0;
                 int GeodeRob = 0;
                 dict = new Dictionary<state, int>();
-                var x = GetMaxGeode(ore, clay, obsidian, geode, OreRobs, ClayRobs, ObsRob, GeodeRob, 24, blu, r);
+                var x = GetMaxGeode(ore, clay, obsidian, geode, OreRobs, ClayRobs, ObsRob, GeodeRob, 32, blu, r);
                 sum += x * blu.Id;
                 Console.WriteLine(x);
                 //for (int i = 0; i < 24; i++)
@@ -191,6 +194,8 @@ namespace Advent2022
             int gain = 0;
             state x = new state(ore, clay, obsidian, geode, oreRobs, clayRobs,
             obsRob, geodeRob, time);
+            if (dict.ContainsKey(x))
+                return dict[x];
             if (time == 0)
             {
                 //if (!dict.ContainsKey(x))
@@ -202,18 +207,18 @@ namespace Advent2022
             //pick to make geode robot
             if (ore >= blu.Geode.Item1 && obsidian >= blu.Geode.Item2)
             {
-                x = new state(ore + oreRobs - blu.Geode.Item1, clay + clayRobs, obsidian + obsRob - blu.Geode.Item2,
-                    geode + geodeRob, oreRobs,
-                    clayRobs, obsRob, geodeRob + 1, time - 1);
-                if (dict.ContainsKey(x))
-                    gain = dict[x];
-                else
-                {
+                //x = new state(ore + oreRobs - blu.Geode.Item1, clay + clayRobs, obsidian + obsRob - blu.Geode.Item2,
+                //    geode + geodeRob, oreRobs,
+                //    clayRobs, obsRob, geodeRob + 1, time - 1);
+                //if (dict.ContainsKey(x))
+                //    gain = dict[x];
+                //else
+                //{
                     gain = GetMaxGeode(ore + oreRobs - blu.Geode.Item1, clay + clayRobs,
                         obsidian + obsRob - blu.Geode.Item2, geode + geodeRob, oreRobs,
                         clayRobs, obsRob, geodeRob + 1, time - 1, blu, r);
-                    if(x.Time!=0) dict.Add(x, gain);
-                }
+                    //if(x.Time!=0) dict.TryAdd(x, gain);
+                //}
                 if (gain > best)
                 {
                     best = gain;
@@ -224,18 +229,18 @@ namespace Advent2022
 
         if (ore >= blu.Obsidian.Item1 && clay >= blu.Obsidian.Item2)
             {
-                x = new state(ore + oreRobs - blu.Obsidian.Item1, clay + clayRobs - blu.Obsidian.Item2,
-                    obsidian + obsRob, geode + geodeRob, oreRobs,
-                    clayRobs, obsRob + 1, geodeRob, time - 1);
-                if (dict.ContainsKey(x))
-                    gain = dict[x];
-                else
-                {
+                //x = new state(ore + oreRobs - blu.Obsidian.Item1, clay + clayRobs - blu.Obsidian.Item2,
+                //    obsidian + obsRob, geode + geodeRob, oreRobs,
+                //    clayRobs, obsRob + 1, geodeRob, time - 1);
+                //if (dict.ContainsKey(x))
+                //    gain = dict[x];
+                //else
+                //{
                     gain = GetMaxGeode(ore + oreRobs - blu.Obsidian.Item1, clay + clayRobs - blu.Obsidian.Item2,
                         obsidian + obsRob, geode + geodeRob, oreRobs,
                         clayRobs, obsRob + 1, geodeRob, time - 1, blu, r);
-                    if (x.Time != 0) dict.Add(x, gain);
-                }
+                    //if (x.Time != 0) dict.TryAdd(x, gain);
+               // }
 
                 if (gain > best)
                 {
@@ -247,19 +252,19 @@ namespace Advent2022
             // {
             if (ore >= blu.ClayRobot && clayRobs < blu.Obsidian.Item2)
             {
-                x = new state(ore + oreRobs - blu.ClayRobot, clay + clayRobs, obsidian + obsRob,
-                    geode + geodeRob, oreRobs,
-                    clayRobs + 1, obsRob, geodeRob, time - 1);
-                if (dict.ContainsKey(x))
-                    gain = dict[x];
-                else
-                {
+                //x = new state(ore + oreRobs - blu.ClayRobot, clay + clayRobs, obsidian + obsRob,
+                //    geode + geodeRob, oreRobs,
+                //    clayRobs + 1, obsRob, geodeRob, time - 1);
+                //if (dict.ContainsKey(x))
+                //    gain = dict[x];
+                //else
+                //{
                     gain = GetMaxGeode(ore + oreRobs - blu.ClayRobot, clay + clayRobs, obsidian + obsRob,
                         geode + geodeRob, oreRobs,
                         clayRobs + 1, obsRob, geodeRob, time - 1, blu, r);
 
-                    if (x.Time != 0) dict.Add(x, gain);
-                }
+                    //if (x.Time != 0) dict.TryAdd(x, gain);
+               // }
 
                 if (gain > best)
                 {
@@ -268,20 +273,20 @@ namespace Advent2022
             }
 
             //pick to make a ore robot
-            var maxorbSpent = blu.ClayRobot + blu.Obsidian.Item1 + blu.Geode.Item1;
-            if (ore >= blu.OreRobot && oreRobs < maxorbSpent)
+           // var maxorbSpent = Math.Max(blu.ClayRobot, blu.Obsidian.Item1,blu.Geode.Item1);
+            if (ore >= blu.OreRobot && oreRobs < blu.MaxObs)
             {
-                x = new state(ore + oreRobs - blu.OreRobot, clay + clayRobs, obsidian + obsRob,
-                    geode + geodeRob, oreRobs + 1, clayRobs, obsRob, geodeRob, time - 1);
-                if (dict.ContainsKey(x))
-                    gain = dict[x];
-                else
-                {
+                //x = new state(ore + oreRobs - blu.OreRobot, clay + clayRobs, obsidian + obsRob,
+                //    geode + geodeRob, oreRobs + 1, clayRobs, obsRob, geodeRob, time - 1);
+                //if (dict.ContainsKey(x))
+                //    gain = dict[x];
+                //else
+                //{
                     gain = GetMaxGeode(ore + oreRobs - blu.OreRobot, clay + clayRobs, obsidian + obsRob,
                         geode + geodeRob, oreRobs + 1,
                         clayRobs, obsRob, geodeRob, time - 1, blu, r);
-                    if (x.Time != 0) dict.Add(x, gain);
-                }
+                   // if (x.Time != 0) dict.TryAdd(x, gain);
+               // }
 
                 if (gain > best)
                 {
@@ -294,24 +299,24 @@ namespace Advent2022
             //if (dict.ContainsKey(x))
             //    gain = dict[x];
             //else { 
-            x = new state(ore + oreRobs, clay + clayRobs, obsidian + obsRob, geode + geodeRob,
-                oreRobs, clayRobs, obsRob, geodeRob, time - 1);
-            if (dict.ContainsKey(x))
-                gain = dict[x];
-            else
-            {
-                gain = GetMaxGeode(ore + oreRobs, clay + clayRobs, obsidian + obsRob, geode + geodeRob,
+            //x = new state(ore + oreRobs, clay + clayRobs, obsidian + obsRob, geode + geodeRob,
+            //    oreRobs, clayRobs, obsRob, geodeRob, time - 1);
+            //if (dict.ContainsKey(x))
+            //    gain = dict[x];
+            //else
+            //{
+            gain = GetMaxGeode(ore + oreRobs, clay + clayRobs, obsidian + obsRob, geode + geodeRob,
                     oreRobs, clayRobs, obsRob, geodeRob, time - 1, blu, r);
 
-                if (x.Time != 0) dict.Add(x, gain);
-            }
+                
+            //}
 
             //}
             if (gain > best)
                 best = gain;
             //}
 
-
+            if (x.Time != 0) dict.TryAdd(x, gain);
             return best;
 
         }
